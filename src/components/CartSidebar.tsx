@@ -12,40 +12,39 @@ const CartSidebar = () => {
     navigate('/checkout');
   };
 
+  const calculateSubtotal = () => {
+    return state.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  };
+
   const sidebarVariants = {
     hidden: { 
-      x: '100%',
-      opacity: 0
+      x: '100%'
     },
     visible: { 
       x: 0,
-      opacity: 1,
       transition: {
-        type: "spring" as const,
+        type: "spring",
         stiffness: 300,
-        damping: 30,
-        duration: 0.4
+        damping: 30
       }
     },
     exit: { 
       x: '100%',
-      opacity: 0,
       transition: {
-        type: "spring" as const,
+        type: "spring",
         stiffness: 300,
-        damping: 30,
-        duration: 0.3
+        damping: 30
       }
     }
   };
 
   const itemVariants = {
     hidden: { opacity: 0, x: 20 },
-    visible: (i: number) => ({
+    visible: (i) => ({
       opacity: 1,
       x: 0,
       transition: {
-        delay: i * 0.1,
+        delay: i * 0.05,
         duration: 0.3
       }
     }),
@@ -67,7 +66,7 @@ const CartSidebar = () => {
 
           {/* Cart Sidebar */}
           <motion.div
-            className="fixed top-0 right-0 h-full w-full max-w-md bg-card shadow-2xl z-50 flex flex-col"
+            className="fixed top-0 right-0 h-full w-full sm:max-w-md bg-card shadow-2xl z-[100] flex flex-col"
             variants={sidebarVariants}
             initial="hidden"
             animate="visible"
@@ -121,83 +120,90 @@ const CartSidebar = () => {
                   </motion.button>
                 </motion.div>
               ) : (
-                <div className="space-y-4">
-                  {state.items.map((item, index) => (
-                    <motion.div
-                      key={`${item.id}-${item.selectedColor}`}
-                      className="bg-muted/30 rounded-2xl p-4 flex items-center space-x-4"
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      custom={index}
-                      whileHover={{ scale: 1.02 }}
-                    >
-                      {/* Product Image */}
-                      <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center text-2xl">
-                        {item.emoji}
-                      </div>
-
-                      {/* Product Info */}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-foreground truncate font-kids">
-                          {item.name}
-                        </h4>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: item.selectedColor }}
-                          />
-                          <span className="text-xs text-muted-foreground">{item.category}</span>
-                        </div>
-                        <p className="text-sm font-bold text-primary mt-1">
-                          ${item.price.toFixed(2)}
-                        </p>
-                      </div>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center space-x-2">
-                        <motion.button
-                          className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <Minus size={12} />
-                        </motion.button>
-                        
-                        <span className="w-8 text-center font-semibold">
-                          {item.quantity}
-                        </span>
-                        
-                        <motion.button
-                          className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary-glow"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <Plus size={12} />
-                        </motion.button>
-                      </div>
-
-                      {/* Remove Button */}
-                      <motion.button
-                        className="text-destructive hover:text-destructive/80 p-1"
-                        onClick={() => removeItem(item.id)}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                <motion.div layout className="space-y-4">
+                  <AnimatePresence>
+                    {state.items.map((item, index) => (
+                      <motion.div
+                        key={item.id}
+                        className="bg-muted/30 rounded-2xl p-4 flex items-center space-x-4"
+                        variants={itemVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        custom={index}
+                        whileHover={{ scale: 1.02 }}
                       >
-                        <X size={16} />
-                      </motion.button>
-                    </motion.div>
-                  ))}
-                </div>
+                        {/* Product Image */}
+                        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-xl flex items-center justify-center text-2xl">
+                          {item.emoji}
+                        </div>
+
+                        {/* Product Info */}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-foreground truncate font-kids">
+                            {item.name}
+                          </h4>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: item.selectedColor }}
+                            />
+                            <span className="text-xs text-muted-foreground">{item.category}</span>
+                          </div>
+                          <p className="text-sm font-bold text-primary mt-1">
+                            ${item.price.toFixed(2)}
+                          </p>
+                        </div>
+
+                        {/* Quantity Controls */}
+                        <div className="flex items-center space-x-2">
+                          <motion.button
+                            className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center"
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Minus size={12} />
+                          </motion.button>
+                          
+                          <span className="w-8 text-center font-semibold">
+                            {item.quantity}
+                          </span>
+                          
+                          <motion.button
+                            className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center hover:bg-primary-glow"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                          >
+                            <Plus size={12} />
+                          </motion.button>
+                        </div>
+
+                        {/* Remove Button */}
+                        <motion.button
+                          className="text-destructive hover:text-destructive/80 p-1"
+                          onClick={() => removeItem(item.id)}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                        >
+                          <X size={16} />
+                        </motion.button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
               )}
             </div>
 
             {/* Footer with Total and Checkout */}
             {state.items.length > 0 && (
               <div className="border-t border-border p-6 space-y-4">
+                {/* Subtotal */}
+                <div className="flex justify-between items-center text-sm text-muted-foreground">
+                  <span>Subtotal:</span>
+                  <span>${calculateSubtotal().toFixed(2)}</span>
+                </div>
                 {/* Total */}
                 <div className="flex justify-between items-center">
                   <span className="text-lg font-semibold text-foreground">Total:</span>
@@ -208,7 +214,7 @@ const CartSidebar = () => {
 
                 {/* Checkout Button */}
                 <motion.button
-                  className="w-full bg-gradient-to-r from-success to-accent text-success-foreground py-4 rounded-2xl font-bold text-lg flex items-center justify-center space-x-3 shadow-playful hover:shadow-glow"
+                  className="w-full bg-gradient-to-r from-success to-accent text-success-foreground py-4 rounded-2xl font-bold text-lg flex items-center justify-center space-x-3 shadow-playful hover:shadow-glow disabled:from-gray-400 disabled:to-gray-500 disabled:shadow-none disabled:cursor-not-allowed"
                   onClick={handleCheckout}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

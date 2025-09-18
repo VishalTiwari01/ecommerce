@@ -6,7 +6,8 @@ import { useCart } from '../contexts/CartContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
+  const [hoveredMenu, setHoveredMenu] = useState(null);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { getItemCount, toggleCart } = useCart();
 
   const menuItems = [
@@ -65,7 +66,7 @@ const Navbar = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className=" md:flex items-center space-x-8 ">
             {menuItems.map((item) => (
               <div
                 key={item.name}
@@ -85,7 +86,7 @@ const Navbar = () => {
                   <AnimatePresence>
                     {hoveredMenu === item.name && (
                       <motion.div
-                        className="absolute top-full left-1/2 transform -translate-x-1/2 w-screen max-w-4xl bg-card shadow-playful rounded-b-3xl border border-border mt-2"
+                        className="absolute top-full transform -translate-x-1/2 w-screen  max-w-3xl bg-card shadow-playful rounded-b-3xl border border-border mt-5"
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -128,33 +129,65 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Search and Cart Icons */}
-          <div className="flex items-center space-x-4">
-            <motion.button
-              className="p-2 text-foreground hover:text-primary transition-colors duration-200"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Search size={24} />
-            </motion.button>
+          {/* Search, Cart, and Mobile Menu Icons */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Search */}
+            <AnimatePresence mode="wait">
+              {isSearchOpen ? (
+                <motion.div
+                  key="search-input"
+                  className="relative flex items-center"
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 200, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="w-full h-10 px-4 pr-10 text-sm bg-card border border-border rounded-full outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  />
+                  <motion.button
+                    className="absolute right-2 p-2 text-foreground hover:text-primary transition-colors duration-200"
+                    onClick={() => setIsSearchOpen(false)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <X size={20} />
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="search-button"
+                  className="p-2 text-foreground hover:text-primary transition-colors duration-200"
+                  onClick={() => setIsSearchOpen(true)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Search size={24} />
+                </motion.button>
+              )}
+            </AnimatePresence>
 
-            <motion.div 
+            {/* Cart */}
+            <motion.div
               className="relative"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <button 
+              <button
                 className="p-2 text-foreground hover:text-primary transition-colors duration-200"
                 onClick={toggleCart}
+                aria-label="Toggle shopping cart"
               >
                 <ShoppingCart size={24} />
               </button>
               {getItemCount() > 0 && (
                 <motion.span
                   className="absolute -top-1 -right-1 w-5 h-5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30, mass: 1 }}
                 >
                   {getItemCount()}
                 </motion.span>

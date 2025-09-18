@@ -1,30 +1,11 @@
 import { motion } from 'framer-motion';
-import { ShoppingCart, Eye, Star, Heart } from 'lucide-react';
+import { ShoppingCart, Eye, Star } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { toast } from '../hooks/use-toast';
 
-interface Product {
-  id: number;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  category: string;
-  emoji: string;
-  colors: string[];
-  isNew?: boolean;
-  isBestSeller?: boolean;
-}
-
-interface ProductCardProps {
-  product: Product;
-  index: number;
-}
-
-const ProductCard = ({ product, index }: ProductCardProps) => {
-  const [isLiked, setIsLiked] = useState(false);
+const ProductCard = ({ product, index }) => {
   const [selectedColor, setSelectedColor] = useState(0);
   const navigate = useNavigate();
   const { addItem, openCart } = useCart();
@@ -42,7 +23,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       transition: {
         delay: index * 0.1,
         duration: 0.6,
-        type: "spring" as const,
+        type: "spring",
         stiffness: 100,
         damping: 20
       }
@@ -64,7 +45,6 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       description: `${product.name} has been added to your cart.`,
     });
     
-    // Open cart after a short delay
     setTimeout(() => {
       openCart();
     }, 500);
@@ -101,21 +81,6 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           {product.isNew ? '✨ NEW' : '🔥 BEST SELLER'}
         </motion.div>
       )}
-
-      {/* Like Button */}
-      <motion.button
-        className="absolute top-3 right-3 z-10 p-2 rounded-full bg-card/80 backdrop-blur-sm border border-border/50"
-        onClick={() => setIsLiked(!isLiked)}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        <Heart 
-          size={16} 
-          className={`transition-colors duration-200 ${
-            isLiked ? 'text-secondary fill-current' : 'text-muted-foreground'
-          }`} 
-        />
-      </motion.button>
 
       {/* Product Image Area */}
       <div 
