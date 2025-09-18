@@ -67,7 +67,7 @@ const CartSidebar = () => {
           {/* Cart Sidebar */}
           <motion.div
             className="fixed top-0 right-0 h-full w-full sm:max-w-md bg-card shadow-2xl z-[100] flex flex-col"
-            variants={sidebarVariants}
+            // variants={sidebarVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
