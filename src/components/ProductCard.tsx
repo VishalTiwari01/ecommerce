@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import { ShoppingCart, Eye, Star, Heart } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
+import { toast } from '../hooks/use-toast';
 
 interface Product {
   id: number;
@@ -23,6 +26,8 @@ interface ProductCardProps {
 const ProductCard = ({ product, index }: ProductCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [selectedColor, setSelectedColor] = useState(0);
+  const navigate = useNavigate();
+  const { addItem, openCart } = useCart();
 
   const cardVariants = {
     hidden: { 
@@ -45,12 +50,28 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   };
 
   const handleAddToCart = () => {
-    // Add cart animation logic here
-    console.log(`Added ${product.name} to cart`);
+    addItem({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      emoji: product.emoji,
+      selectedColor: product.colors[selectedColor],
+      category: product.category
+    });
+    
+    toast({
+      title: "Added to cart! 🎉",
+      description: `${product.name} has been added to your cart.`,
+    });
+    
+    // Open cart after a short delay
+    setTimeout(() => {
+      openCart();
+    }, 500);
   };
 
   const handleQuickView = () => {
-    console.log(`Quick view for ${product.name}`);
+    navigate(`/product/${product.id}`);
   };
 
   return (
@@ -97,7 +118,10 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
       </motion.button>
 
       {/* Product Image Area */}
-      <div className="relative h-48 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-4 overflow-hidden">
+      <div 
+        className="relative h-48 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-4 overflow-hidden cursor-pointer"
+        onClick={() => navigate(`/product/${product.id}`)}
+      >
         <motion.div 
           className="text-6xl group-hover:scale-110 transition-transform duration-300"
           animate={{ 

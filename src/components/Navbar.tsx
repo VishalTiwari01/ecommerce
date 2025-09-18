@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Search, Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../contexts/CartContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
-  const [cartCount, setCartCount] = useState(3);
+  const { getItemCount, toggleCart } = useCart();
 
   const menuItems = [
     { 
@@ -142,17 +143,20 @@ const Navbar = () => {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
             >
-              <button className="p-2 text-foreground hover:text-primary transition-colors duration-200">
+              <button 
+                className="p-2 text-foreground hover:text-primary transition-colors duration-200"
+                onClick={toggleCart}
+              >
                 <ShoppingCart size={24} />
               </button>
-              {cartCount > 0 && (
+              {getItemCount() > 0 && (
                 <motion.span
                   className="absolute -top-1 -right-1 w-5 h-5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center"
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 >
-                  {cartCount}
+                  {getItemCount()}
                 </motion.span>
               )}
             </motion.div>
