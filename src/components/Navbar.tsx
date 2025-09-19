@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useCart } from '../contexts/CartContext';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, Search, Menu, X, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useCart } from "../contexts/CartContext";
+import Logo from "../assest/logoA.png";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,22 +12,22 @@ const Navbar = () => {
   const { getItemCount, toggleCart } = useCart();
 
   const menuItems = [
-    { 
-      name: 'Products', 
+    {
+      name: "Products",
       subCategories: [
-        { name: 'Ages 0-3', path: '/products/0-3' },
-        { name: 'Ages 4-7', path: '/products/4-7' },
-        { name: 'Ages 8-12', path: '/products/8-12' },
-        { name: 'Best Sellers', path: '/products/bestsellers' }
-      ]
+        { name: "Ages 0-3", path: "/products/0-3" },
+        { name: "Ages 4-7", path: "/products/4-7" },
+        { name: "Ages 8-12", path: "/products/8-12" },
+        { name: "Best Sellers", path: "/products/bestsellers" },
+      ],
     },
-    { name: 'Toys', path: '/toys' },
-    { name: 'Water Bottles', path: '/bottles' },
-    { name: 'Backpacks', path: '/backpacks' },
+    { name: "Toys", path: "/toys" },
+    { name: "Water Bottles", path: "/bottles" },
+    { name: "Backpacks", path: "/backpacks" },
   ];
 
   return (
-    <motion.nav 
+    <motion.nav
       className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border shadow-card"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -36,37 +37,19 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Animated Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <motion.div 
-              className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center"
-              animate={{ 
-                rotate: [0, 5, -5, 0],
-                scale: [1, 1.05, 1]
-              }}
-              transition={{ 
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              <span className="text-white font-bold text-xl">🎈</span>
-            </motion.div>
-            <motion.span 
-              className="text-2xl font-bold gradient-text font-kids"
-              animate={{ 
-                backgroundPosition: ["0%", "100%", "0%"]
-              }}
-              transition={{ 
-                duration: 3,
-                repeat: Infinity,
-                ease: "linear"
-              }}
-            >
-              KidsWorld
-            </motion.span>
+            <motion.img
+              src={Logo} // 🖼️ Replace with your logo path (public folder or import)
+              alt="KidsWorld Logo"
+              className="w-12 h-12 rounded-full object-cover"
+              animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+
+            
           </Link>
 
           {/* Desktop Navigation */}
-          <div className=" md:flex items-center space-x-8 ">
+          <div className="hidden md:flex items-center space-x-8 max-w-3xl">
             {menuItems.map((item) => (
               <div
                 key={item.name}
@@ -75,7 +58,7 @@ const Navbar = () => {
                 onMouseLeave={() => setHoveredMenu(null)}
               >
                 <Link
-                  to={item.path || '#'}
+                  to={item.path || "#"}
                   className="text-foreground hover:text-primary font-semibold transition-colors duration-200 py-2"
                 >
                   {item.name}
@@ -86,7 +69,7 @@ const Navbar = () => {
                   <AnimatePresence>
                     {hoveredMenu === item.name && (
                       <motion.div
-                        className="absolute top-full transform -translate-x-1/2 w-screen  max-w-3xl bg-card shadow-playful rounded-b-3xl border border-border mt-5"
+                        className="absolute top-full left-1/3 transform -translate-x-1/2 w-screen max-w-2xl bg-card shadow-playful rounded-b-3xl border border-border mt-4"
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -95,7 +78,9 @@ const Navbar = () => {
                         <div className="grid grid-cols-2 gap-8 p-8">
                           {/* Links Column */}
                           <div>
-                            <h3 className="text-lg font-bold text-primary mb-4">Shop by Age</h3>
+                            <h3 className="text-lg font-bold text-primary mb-4">
+                              Shop by Age
+                            </h3>
                             <div className="space-y-3">
                               {item.subCategories.map((subItem) => (
                                 <Link
@@ -110,7 +95,7 @@ const Navbar = () => {
                           </div>
 
                           {/* Image Spotlight */}
-                          <motion.div 
+                          <motion.div
                             className="flex items-center justify-center"
                             initial={{ opacity: 0, scale: 0.8 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -129,7 +114,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Search, Cart, and Mobile Menu Icons */}
+          {/* Icons: Search, Cart, User, Mobile Menu */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Search */}
             <AnimatePresence mode="wait">
@@ -187,11 +172,31 @@ const Navbar = () => {
                   className="absolute -top-1 -right-1 w-5 h-5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center"
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30, mass: 1 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 500,
+                    damping: 30,
+                    mass: 1,
+                  }}
                 >
                   {getItemCount()}
                 </motion.span>
               )}
+            </motion.div>
+
+            {/* User Icon */}
+            <motion.div
+              className="relative"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                to="/profile" // or "/login"
+                className="p-2 text-foreground hover:text-primary transition-colors duration-200"
+                aria-label="User Profile"
+              >
+                <User size={24} />
+              </Link>
             </motion.div>
 
             {/* Mobile Menu Button */}
@@ -218,7 +223,7 @@ const Navbar = () => {
                 {menuItems.map((item) => (
                   <Link
                     key={item.name}
-                    to={item.path || '#'}
+                    to={item.path || "#"}
                     className="block py-2 text-foreground hover:text-primary font-semibold transition-colors duration-200"
                     onClick={() => setIsMenuOpen(false)}
                   >

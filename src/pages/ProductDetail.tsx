@@ -4,7 +4,7 @@ import { ArrowLeft, Star, Heart, ShoppingCart, Shield, Truck, RotateCcw } from '
 import { useState } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { toast } from '../hooks/use-toast';
-import Navbar from '../components/Navbar';
+// import Navbar from '../components/Navbar';
 
 // Mock product data - in a real app, this would come from an API
 const productData = {
@@ -118,7 +118,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {/* <Navbar /> */}
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
@@ -335,25 +335,7 @@ const ProductDetail = () => {
           </motion.div>
         </div>
 
-        {/* Specifications */}
-        <motion.div
-          className="mt-16 bg-card rounded-3xl p-8"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <h3 className="text-2xl font-bold text-foreground font-kids mb-6">
-            Product Specifications
-          </h3>
-          <div className="grid md:grid-cols-2 gap-6">
-            {Object.entries(product.specifications).map(([key, value]) => (
-              <div key={key} className="flex justify-between items-center py-3 border-b border-border last:border-b-0">
-                <span className="font-medium text-foreground">{key}:</span>
-                <span className="text-muted-foreground">{value}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+       
       </main>
     </div>
   );

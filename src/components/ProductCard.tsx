@@ -187,13 +187,15 @@ const ProductCard = ({ product, index }) => {
           </div>
           
           <motion.button
-            className="btn-cart text-sm px-4 py-2"
-            onClick={handleAddToCart}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Add to Cart
-          </motion.button>
+  className="text-sm px-4 py-2 rounded-md text-black"
+  style={{ backgroundColor: '#F7D2CF' }}
+  onClick={handleAddToCart}
+  whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
+>
+  Add to Cart
+</motion.button>
+
         </div>
       </div>
     </motion.div>

@@ -6,7 +6,7 @@ import CategoriesSection from '../components/CategoriesSection';
 const Index = () => {
   return (
     <div className="min-h-screen bg-background font-kids">
-      <Navbar />
+      {/* <Navbar /> */}
       <main>
         <HeroSection />
         <ProductShowcase />
@@ -14,7 +14,7 @@ const Index = () => {
       </main>
       
       {/* Simple Footer */}
-      <footer className="bg-card/50 border-t border-border py-16">
+      {/* <footer className="bg-card/50 border-t border-border py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="col-span-2">
@@ -66,7 +66,7 @@ const Index = () => {
             <p>&copy; 2024 KidsWorld. Made with 💖 for amazing kids and parents.</p>
           </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 };
