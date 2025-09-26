@@ -1,14 +1,22 @@
 import React from "react";
-
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaWhatsapp } from "react-icons/fa";
+import Logo from '../assest/logoA.png'
 const Footer = () => {
+  const socialIcons = [
+    { icon: <FaFacebookF />, name: "Facebook" },
+    { icon: <FaInstagram />, name: "Instagram" },
+    { icon: <FaLinkedinIn />, name: "LinkedIn" },
+    { icon: <FaWhatsapp />, name: "WhatsApp" },
+  ];
+
   return (
     <footer className="bg-card/50 border-t border-border py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-4 gap-8">
           <div className="col-span-2">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">🎈</span>
+              <div className="w-12 h-12  rounded-full flex items-center justify-center">
+                <img src={Logo} alt="" />
               </div>
               <span className="text-2xl font-bold gradient-text font-kids">KidsWorld</span>
             </div>
@@ -16,12 +24,14 @@ const Footer = () => {
               Making childhood magical with safe, fun, and educational products that inspire creativity and learning.
             </p>
             <div className="flex space-x-4">
-              {['🌟', '🎨', '🚀', '💖'].map((emoji, i) => (
+              {socialIcons.map(({ icon, name }, i) => (
                 <div
                   key={i}
                   className="w-10 h-10 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-full flex items-center justify-center text-xl hover:scale-110 transition-transform cursor-pointer"
+                  aria-label={name}
+                  title={name}
                 >
-                  {emoji}
+                  {icon}
                 </div>
               ))}
             </div>

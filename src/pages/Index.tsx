@@ -2,6 +2,8 @@ import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import ProductShowcase from '../components/ProductShowcase';
 import CategoriesSection from '../components/CategoriesSection';
+import InstagramReels from '../components/InstagramReels';
+import BannerCarousel from '../components/BannerCarousel';
 
 const Index = () => {
   return (
@@ -10,7 +12,9 @@ const Index = () => {
       <main>
         <HeroSection />
         <ProductShowcase />
+        <BannerCarousel/>
         <CategoriesSection />
+         <InstagramReels />
       </main>
       
       {/* Simple Footer */}

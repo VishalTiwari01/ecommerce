@@ -1,30 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Search, Menu, X, User } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { signOut, signIn, selectUser } from "../redux/slices/authSlice";
 import { useCart } from "../contexts/CartContext";
 import Logo from "../assest/logoA.png";
+import UserDropdown from "./UserDropdown";
+import SignInModal from "./SignInModal";
 
 const Navbar = () => {
+  const dispatch = useDispatch();
+  const user = useSelector(selectUser);
+  const { getItemCount, toggleCart } = useCart();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { getItemCount, toggleCart } = useCart();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const menuItems = [
     {
       name: "Products",
       subCategories: [
-        { name: "Ages 0-3", path: "/products/0-3" },
-        { name: "Ages 4-7", path: "/products/4-7" },
-        { name: "Ages 8-12", path: "/products/8-12" },
-        { name: "Best Sellers", path: "/products/bestsellers" },
+        { name: "Ages 0-3", path: "/category/0-3" },
+        { name: "Ages 4-7", path: "/category/4-7" },
+        { name: "Ages 8-12", path: "/category/8-12" },
+        { name: "Best Sellers", path: "/category/bestsellers" },
       ],
     },
-    { name: "Toys", path: "/toys" },
-    { name: "Water Bottles", path: "/bottles" },
-    { name: "Backpacks", path: "/backpacks" },
+    { name: "Toys", path: "/category/toys" },
+    { name: "Water Bottles", path: "/category/bottles" },
+    { name: "Backpacks", path: "/category/backpacks" },
   ];
+
+  const handleLogout = () => {
+    dispatch(signOut());
+  };
+
+  const handleSignIn = (userData) => {
+    // Login is handled in redux via loginUser
+  };
+
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if (user && token) {
+      dispatch(signIn({ user, token }));
+    }
+  }, [dispatch]);
 
   return (
     <motion.nav
@@ -35,20 +61,18 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Animated Logo */}
+          {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
             <motion.img
-              src={Logo} // 🖼️ Replace with your logo path (public folder or import)
-              alt="KidsWorld Logo"
+              src={Logo}
+              alt="Logo"
               className="w-12 h-12 rounded-full object-cover"
               animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             />
-
-            
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-8 max-w-3xl">
             {menuItems.map((item) => (
               <div
@@ -76,11 +100,8 @@ const Navbar = () => {
                         transition={{ duration: 0.2 }}
                       >
                         <div className="grid grid-cols-2 gap-8 p-8">
-                          {/* Links Column */}
                           <div>
-                            <h3 className="text-lg font-bold text-primary mb-4">
-                              Shop by Age
-                            </h3>
+                            <h3 className="text-lg font-bold text-primary mb-4">Shop by Age</h3>
                             <div className="space-y-3">
                               {item.subCategories.map((subItem) => (
                                 <Link
@@ -94,7 +115,7 @@ const Navbar = () => {
                             </div>
                           </div>
 
-                          {/* Image Spotlight */}
+                          {/* Emoji Image */}
                           <motion.div
                             className="flex items-center justify-center"
                             initial={{ opacity: 0, scale: 0.8 }}
@@ -114,7 +135,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Icons: Search, Cart, User, Mobile Menu */}
+          {/* Right Icons */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Search */}
             <AnimatePresence mode="wait">
@@ -155,15 +176,10 @@ const Navbar = () => {
             </AnimatePresence>
 
             {/* Cart */}
-            <motion.div
-              className="relative"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <motion.div className="relative" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
               <button
                 className="p-2 text-foreground hover:text-primary transition-colors duration-200"
                 onClick={toggleCart}
-                aria-label="Toggle shopping cart"
               >
                 <ShoppingCart size={24} />
               </button>
@@ -172,34 +188,32 @@ const Navbar = () => {
                   className="absolute -top-1 -right-1 w-5 h-5 bg-secondary text-secondary-foreground text-xs font-bold rounded-full flex items-center justify-center"
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 30,
-                    mass: 1,
-                  }}
+                  transition={{ type: "spring", stiffness: 500, damping: 30, mass: 1 }}
                 >
                   {getItemCount()}
                 </motion.span>
               )}
             </motion.div>
 
-            {/* User Icon */}
-            <motion.div
-              className="relative"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                to="/profile" // or "/login"
+            {/* User Icon + Dropdown */}
+            <motion.div className="relative" whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="p-2 text-foreground hover:text-primary transition-colors duration-200"
-                aria-label="User Profile"
               >
                 <User size={24} />
-              </Link>
+              </button>
+
+              <UserDropdown
+                isOpen={isDropdownOpen}
+                onClose={() => setIsDropdownOpen(false)}
+                isAuthenticated={!!user}
+                onSignInClick={() => setIsModalOpen(true)}
+                onLogout={handleLogout}
+              />
             </motion.div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <button
               className="md:hidden p-2 text-foreground hover:text-primary transition-colors duration-200"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -209,7 +223,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Dropdown Menu */}
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
@@ -235,6 +249,13 @@ const Navbar = () => {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Sign In Modal */}
+      <SignInModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSignIn={handleSignIn}
+      />
     </motion.nav>
   );
 };

@@ -187,14 +187,14 @@ const CategoriesSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.8 }}
         >
-          <motion.button
+          {/* <motion.button
             className="btn-hero"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
             View All Products
             <ArrowRight className="ml-2" size={20} />
-          </motion.button>
+          </motion.button> */}
         </motion.div>
       </div>
     </section>

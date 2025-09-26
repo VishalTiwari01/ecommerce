@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { CreditCard, User, MapPin, Package, ArrowLeft, Lock, CheckCircle } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { toast } from '../hooks/use-toast';
-import Navbar from '../components/Navbar';
+
 
 const Checkout = () => {
   const { state, clearCart } = useCart();
@@ -66,14 +66,18 @@ const Checkout = () => {
     
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Generate a mock order ID for redirection
+    const mockOrderId = `ORDER-${Math.floor(Math.random() * 1000000000)}`;
     
     toast({
       title: "Order placed successfully! 🎉",
-      description: "Thank you for your purchase. You'll receive a confirmation email shortly.",
+      description: `Your order ID is ${mockOrderId}. Thank you for your purchase.`,
     });
     
     clearCart();
-    navigate('/');
+    // Redirect to the dynamic order page with the new ID
+    navigate(`/order/${mockOrderId}`);
     setIsProcessing(false);
   };
 
@@ -85,7 +89,7 @@ const Checkout = () => {
   if (state.items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+      
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="text-6xl mb-6">🛒</div>
           <h2 className="text-3xl font-bold text-foreground font-kids mb-4">
@@ -109,7 +113,7 @@ const Checkout = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
@@ -308,7 +312,7 @@ const Checkout = () => {
               )}
 
               {/* Step 2: Payment Information */}
-              {currentStep === 2 && (
+              {/* {currentStep === 2 && (
                 <motion.div
                   className="bg-card rounded-3xl p-8"
                   initial={{ opacity: 0, y: 20 }}
@@ -383,7 +387,7 @@ const Checkout = () => {
                   </div>
 
                   {/* Shipping Method */}
-                  <div className="mt-8">
+                  {/* <div className="mt-8">
                     <h3 className="text-lg font-semibold text-foreground mb-4">
                       Shipping Method
                     </h3>
@@ -412,7 +416,7 @@ const Checkout = () => {
                     </div>
                   </div>
                 </motion.div>
-              )}
+              )} */} 
 
               {/* Step 3: Review */}
               {currentStep === 3 && (
@@ -445,7 +449,7 @@ const Checkout = () => {
                               </div>
                             </div>
                             <div className="font-semibold text-primary">
-                              ${(item.price * item.quantity).toFixed(2)}
+                              ${(total.toFixed(2))}
                             </div>
                           </div>
                         ))}

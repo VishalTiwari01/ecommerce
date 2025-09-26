@@ -1,82 +1,67 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Star, Heart, ShoppingCart, Shield, Truck, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import {
+  ArrowLeft,
+  Star,
+  Heart,
+  ShoppingCart,
+  Shield,
+  Truck,
+  RotateCcw,
+} from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { toast } from '../hooks/use-toast';
-// import Navbar from '../components/Navbar';
-
-// Mock product data - in a real app, this would come from an API
-const productData = {
-  1: {
-    id: 1,
-    name: 'Magic Building Blocks',
-    price: 29.99,
-    originalPrice: 39.99,
-    rating: 4.8,
-    reviewCount: 142,
-    category: 'Educational Toys',
-    emoji: '🧱',
-    colors: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'],
-    colorNames: ['Coral Red', 'Turquoise', 'Sky Blue', 'Mint Green'],
-    images: ['🧱', '🔨', '🏗️', '🎨'],
-    description: 'Spark your child\'s creativity with these magical building blocks! Made from safe, eco-friendly materials, these colorful blocks help develop fine motor skills, spatial awareness, and imagination.',
-    features: [
-      'Safe, non-toxic materials',
-      'Develops creativity and motor skills',
-      'Compatible with other block sets',
-      'Ages 3-12 years',
-      'Easy to clean and store'
-    ],
-    specifications: {
-      'Age Range': '3-12 years',
-      'Material': 'BPA-free plastic',
-      'Pieces': '50+ blocks',
-      'Weight': '2.1 lbs',
-      'Dimensions': '12" x 8" x 6"'
-    }
-  },
-  2: {
-    id: 2,
-    name: 'Rainbow Water Bottle',
-    price: 19.99,
-    originalPrice: 24.99,
-    rating: 4.9,
-    reviewCount: 87,
-    category: 'Drink Bottles',
-    emoji: '🌈',
-    colors: ['#FF6B6B', '#FFD93D', '#6BCF7F', '#4D96FF'],
-    colorNames: ['Rainbow Red', 'Sunshine Yellow', 'Nature Green', 'Ocean Blue'],
-    images: ['🌈', '💧', '🍃', '✨'],
-    description: 'Keep your little one hydrated in style with this magical rainbow water bottle! Features temperature control and a fun design that makes drinking water exciting.',
-    features: [
-      'BPA-free and safe materials',
-      'Keeps drinks cold for 12 hours',
-      'Easy-grip design for small hands',
-      'Leak-proof cap',
-      'Fun rainbow design'
-    ],
-    specifications: {
-      'Age Range': '2+ years',
-      'Material': 'Stainless steel',
-      'Capacity': '12 oz',
-      'Weight': '0.8 lbs',
-      'Dimensions': '7.5" x 2.8"'
-    }
-  }
-};
+import { getProductsId } from '../api/api';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem, openCart } = useCart();
-  
+
+  const [product, setProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  const product = productData[id as '1' | '2'];
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const fetchedProduct = await getProductsId(id);
+        setProduct(fetchedProduct);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching product details:', err);
+        setError(err.message);
+        toast({
+          title: 'Error fetching product',
+          description: err.message,
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+      }
+    };
+    fetchProduct();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading product details...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        <p>Error: {error}</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -84,10 +69,7 @@ const ProductDetail = () => {
         <div className="text-center">
           <div className="text-6xl mb-4">😅</div>
           <h2 className="text-2xl font-bold mb-4">Product not found</h2>
-          <button 
-            onClick={() => navigate('/')}
-            className="btn-hero"
-          >
+          <button onClick={() => navigate('/')} className="btn-hero">
             Back to Home
           </button>
         </div>
@@ -97,20 +79,19 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     addItem({
-      id: product.id,
+      id: product._id,
       name: product.name,
       price: product.price,
-      emoji: product.emoji,
-      selectedColor: product.colors[selectedColorIndex],
-      category: product.category
+      selectedColor: product.colors?.[selectedColorIndex],
+      category: product.category,
+      quantity: quantity,
     });
-    
+
     toast({
-      title: "Added to cart! 🎉",
-      description: `${product.name} has been added to your cart.`,
+      title: 'Added to cart! 🎉',
+      description: `${quantity} x ${product.name} has been added to your cart.`,
     });
-    
-    // Open cart after a short delay
+
     setTimeout(() => {
       openCart();
     }, 500);
@@ -118,10 +99,7 @@ const ProductDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* <Navbar /> */}
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back button */}
         <motion.button
           className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors mb-8"
           onClick={() => navigate(-1)}
@@ -133,67 +111,69 @@ const ProductDetail = () => {
         </motion.button>
 
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Product Images */}
+          {/* LEFT: IMAGE GALLERY */}
           <motion.div
-            className="space-y-6"
+            className="space-y-4"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            {/* Main Image */}
             <div className="relative">
-              <motion.div 
-                className="w-full h-96 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl flex items-center justify-center text-8xl shadow-card"
-                whileHover={{ scale: 1.05 }}
-                transition={{ duration: 0.3 }}
-              >
-                {product.images[selectedImageIndex]}
-              </motion.div>
-              
-              {/* Like button */}
+              {product.imageUrl?.length > 0 ? (
+                <motion.img
+                  key={product.imageUrl[selectedImageIndex]?.imageUrl}
+                  src={product.imageUrl[selectedImageIndex]?.imageUrl}
+                  alt={product.name}
+                  className="w-full h-96 object-contain bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl shadow-card"
+                  whileHover={{ scale: 1.03 }}
+                  transition={{ duration: 0.3 }}
+                />
+              ) : (
+                <div className="w-full h-96 bg-muted rounded-3xl flex items-center justify-center text-xl text-muted-foreground">
+                  No Image Available
+                </div>
+              )}
+
               <motion.button
                 className="absolute top-4 right-4 p-3 bg-card/80 backdrop-blur-sm rounded-full shadow-card"
                 onClick={() => setIsLiked(!isLiked)}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
               >
-                <Heart 
-                  size={24} 
+                <Heart
+                  size={24}
                   className={`transition-colors ${
                     isLiked ? 'text-secondary fill-current' : 'text-muted-foreground'
-                  }`} 
+                  }`}
                 />
               </motion.button>
             </div>
 
-            {/* Thumbnail Images */}
-            <div className="flex space-x-4">
-              {product.images.map((image, index) => (
-                <motion.button
-                  key={index}
-                  className={`w-20 h-20 rounded-2xl flex items-center justify-center text-3xl transition-all ${
-                    selectedImageIndex === index 
-                      ? 'bg-gradient-to-br from-primary/20 to-secondary/20 ring-2 ring-primary' 
-                      : 'bg-muted/30 hover:bg-muted/50'
-                  }`}
-                  onClick={() => setSelectedImageIndex(index)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {image}
-                </motion.button>
-              ))}
-            </div>
+            {/* Thumbnail Row */}
+            {product.imageUrl?.length > 1 && (
+              <div className="flex space-x-3 overflow-x-auto pb-1">
+                {product.imageUrl.map((img, index) => (
+                  <img
+                    key={index}
+                    src={img.imageUrl}
+                    alt={`Thumb ${index + 1}`}
+                    onClick={() => setSelectedImageIndex(index)}
+                    className={`w-20 h-20 object-cover rounded-lg border-2 cursor-pointer ${
+                      selectedImageIndex === index ? 'border-primary' : 'border-muted'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </motion.div>
 
-          {/* Product Info */}
+          {/* RIGHT: PRODUCT INFO */}
           <motion.div
             className="space-y-6"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            {/* Category & Rating */}
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-primary bg-primary/10 px-3 py-1 rounded-full">
                 {product.category}
@@ -201,74 +181,77 @@ const ProductDetail = () => {
               <div className="flex items-center space-x-2">
                 <div className="flex items-center space-x-1">
                   {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      size={16} 
+                    <Star
+                      key={i}
+                      size={16}
                       className={`${
-                        i < Math.floor(product.rating) 
-                          ? 'text-accent fill-current' 
+                        i < Math.floor(product.rating)
+                          ? 'text-accent fill-current'
                           : 'text-muted-foreground'
-                      }`} 
+                      }`}
                     />
                   ))}
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  ({product.reviewCount} reviews)
+                  ({product.reviewCount || 0} reviews)
                 </span>
               </div>
             </div>
 
-            {/* Name & Price */}
             <div>
-              <h1 className="text-4xl font-bold text-foreground font-kids mb-4">
+              <h1 className="text-4xl font-bold text-foreground font-kids mb-2">
                 {product.name}
               </h1>
+
+              {product.shortDescription && (
+                <p className="text-muted-foreground mb-4">{product.shortDescription}</p>
+              )}
+
+              {product.color && (
+                <div className="text-muted-foreground mb-4">
+                  <strong>Base Color:</strong> {product.color}
+                </div>
+              )}
+
               <div className="flex items-center space-x-4">
-                <span className="text-3xl font-bold text-primary">
-                  ${product.price}
-                </span>
-                {product.originalPrice && (
-                  <span className="text-xl text-muted-foreground line-through">
-                    ${product.originalPrice}
-                  </span>
-                )}
-                {product.originalPrice && (
-                  <span className="bg-success text-success-foreground px-2 py-1 rounded-full text-sm font-semibold">
-                    Save ${(product.originalPrice - product.price).toFixed(2)}
-                  </span>
+                <span className="text-3xl font-bold text-primary">₹{product.salePrice}</span>
+                {product.price && (
+                  <>
+                    <span className="text-xl text-muted-foreground line-through">₹{product.price}</span>
+                    <span className="bg-success text-success-foreground px-2 py-1 rounded-full text-sm font-semibold">
+                      Save ₹{(product.price - product.salePrice).toFixed(2)}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
 
-            {/* Description */}
-            <p className="text-muted-foreground leading-relaxed">
-              {product.description}
-            </p>
+            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
 
-            {/* Color Selection */}
-            <div>
-              <h3 className="font-semibold text-foreground mb-3">
-                Color: {product.colorNames[selectedColorIndex]}
-              </h3>
-              <div className="flex space-x-3">
-                {product.colors.map((color, index) => (
-                  <motion.button
-                    key={index}
-                    className={`w-12 h-12 rounded-full border-4 transition-all ${
-                      selectedColorIndex === index 
-                        ? 'border-primary scale-110' 
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setSelectedColorIndex(index)}
-                    whileHover={{ scale: selectedColorIndex === index ? 1.1 : 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  />
-                ))}
+            {product.colors && product.colors.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-foreground mb-3">
+                  Color: {product.colorNames?.[selectedColorIndex] || product.colors[selectedColorIndex]}
+                </h3>
+                <div className="flex space-x-3">
+                  {product.colors.map((color, index) => (
+                    <motion.button
+                      key={index}
+                      className={`w-12 h-12 rounded-full border-4 transition-all ${
+                        selectedColorIndex === index
+                          ? 'border-primary scale-110'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      style={{ backgroundColor: color }}
+                      onClick={() => setSelectedColorIndex(index)}
+                      whileHover={{ scale: selectedColorIndex === index ? 1.1 : 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Quantity & Add to Cart */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
                 <span className="font-semibold text-foreground">Quantity:</span>
@@ -279,9 +262,7 @@ const ProductDetail = () => {
                   >
                     -
                   </button>
-                  <span className="px-4 py-2 border-x border-border min-w-[60px] text-center">
-                    {quantity}
-                  </span>
+                  <span className="px-4 py-2 border-x border-border min-w-[60px] text-center">{quantity}</span>
                   <button
                     className="p-2 hover:bg-muted transition-colors"
                     onClick={() => setQuantity(quantity + 1)}
@@ -293,6 +274,7 @@ const ProductDetail = () => {
 
               <motion.button
                 className="flex-1 btn-cart flex items-center justify-center space-x-3 py-4"
+                style={{ backgroundColor: '#F7D2CF' }}
                 onClick={handleAddToCart}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -302,22 +284,32 @@ const ProductDetail = () => {
               </motion.button>
             </div>
 
-            {/* Features */}
-            <div>
-              <h3 className="font-semibold text-foreground mb-3 flex items-center space-x-2">
-                <span>✨ Key Features</span>
-              </h3>
-              <ul className="space-y-2">
-                {product.features.map((feature, index) => (
-                  <li key={index} className="flex items-center space-x-2 text-muted-foreground">
-                    <span className="text-success">✓</span>
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
+            {/* Extra Info */}
+            <div className="space-y-2 text-muted-foreground">
+              {product.material && <div><strong>Material:</strong> {product.material}</div>}
+              {product.dimensions && <div><strong>Dimensions:</strong> {product.dimensions}</div>}
+              {product.weight && <div><strong>Weight:</strong> {product.weight} kg</div>}
+              {product.warrantyPeriod && <div><strong>Warranty:</strong> {product.warrantyPeriod} months</div>}
+              {product.careInstructions && <div><strong>Care:</strong> {product.careInstructions}</div>}
             </div>
 
-            {/* Trust badges */}
+            {/* Features List */}
+            {product.features && product.features.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-foreground mb-3 flex items-center space-x-2">
+                  <span>✨ Key Features</span>
+                </h3>
+                <ul className="space-y-2">
+                  {product.features.map((feature, index) => (
+                    <li key={index} className="flex items-center space-x-2 text-muted-foreground">
+                      <span className="text-success">✓</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="flex items-center justify-between py-6 border-t border-border">
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Shield size={16} className="text-success" />
@@ -334,8 +326,6 @@ const ProductDetail = () => {
             </div>
           </motion.div>
         </div>
-
-       
       </main>
     </div>
   );

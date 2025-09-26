@@ -106,7 +106,7 @@ const HeroSection = () => {
                 animate="visible"
                 variants={textVariants}
               >
-                Products! 🎉
+                Products
               </motion.span>
             </motion.h1>
 
@@ -135,7 +135,7 @@ const HeroSection = () => {
                 whileTap={{ scale: 0.95 }}
               >
                 Shop Now
-                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-200" size={20} />
+                {/* <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-200" size={20} /> */}
               </motion.button>
 
               {/* Secondary Button */}
