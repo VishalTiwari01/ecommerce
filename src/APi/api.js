@@ -1,7 +1,7 @@
 import axios from "axios";
 import { signIn } from "../redux/slices/authSlice";
 
-export const BASE_URL = "http://localhost:1209/api";
+export const BASE_URL =  'https://monkfish-app-phfed.ondigitalocean.app/api';
 
 export const loginUser = async (mobile, dispatch) => {
   try {
