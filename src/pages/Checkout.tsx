@@ -1,10 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, User, MapPin, Package, ArrowLeft, Lock, CheckCircle } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { toast } from '../hooks/use-toast';
 
+// --- NEW HELPER FUNCTION TO LOAD RAZORPAY SCRIPT ---
+const loadRazorpayScript = (src) => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = () => {
+      resolve(true);
+    };
+    script.onerror = () => {
+      resolve(false);
+    };
+    document.body.appendChild(script);
+  });
+};
+// ----------------------------------------------------
+
+// IMPORTANT: Replace with your actual Razorpay Key ID
+const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_KEY_ID"; 
+// Example: "rzp_test_XXXXXXXXXX" for testing
 
 const Checkout = () => {
   const { state, clearCart } = useCart();
@@ -24,16 +43,17 @@ const Checkout = () => {
     zipCode: '',
     country: 'United States',
     
-    // Payment Information
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardName: '',
+    // Payment Information (Mock data for display, actual card processing is via Razorpay)
+    cardNumber: '4111111111111111', // Mock for review step
+    expiryDate: '12/25', // Mock for review step
+    cvv: '123', // Mock for review step
+    cardName: 'John Doe', // Mock for review step
     
     // Shipping Method
     shippingMethod: 'standard'
   });
 
+  // ... (Steps and shippingMethods constants remain the same)
   const steps = [
     { id: 1, name: 'Shipping', icon: MapPin },
     { id: 2, name: 'Payment', icon: CreditCard },
@@ -41,50 +61,143 @@ const Checkout = () => {
   ];
 
   const shippingMethods = [
-    { id: 'standard', name: 'Standard Shipping', time: '5-7 business days', price: 0 },
-    { id: 'express', name: 'Express Shipping', time: '2-3 business days', price: 9.99 },
-    { id: 'overnight', name: 'Overnight Shipping', time: '1 business day', price: 19.99 }
+    { id: 'Cash on Delivery', name: 'Cash on Delivery' },
+    { id: 'Online', name: 'Online Shipping'},
+    
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
-      return;
-    }
-
-    // Process order
-    setIsProcessing(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // Generate a mock order ID for redirection
-    const mockOrderId = `ORDER-${Math.floor(Math.random() * 1000000000)}`;
-    
-    toast({
-      title: "Order placed successfully! 🎉",
-      description: `Your order ID is ${mockOrderId}. Thank you for your purchase.`,
-    });
-    
-    clearCart();
-    // Redirect to the dynamic order page with the new ID
-    navigate(`/order/${mockOrderId}`);
-    setIsProcessing(false);
-  };
-
   const subtotal = state.total;
   const shippingCost = shippingMethods.find(method => method.id === formData.shippingMethod)?.price || 0;
   const tax = subtotal * 0.08; // 8% tax
   const total = subtotal + shippingCost + tax;
+  
+  // Razorpay requires the amount in the smallest currency unit (e.g., paise for INR). 
+  // We'll assume the currency is INR for this example.
+  const amountInPaise = Math.round(total * 100); 
+
+  // --- NEW RAZORPAY INTEGRATION FUNCTION ---
+  const displayRazorpay = async () => {
+    const res = await loadRazorpayScript('https://checkout.razorpay.com/v1/checkout.js');
+
+    if (!res) {
+      toast({
+        title: "Payment Gateway Error",
+        description: "Razorpay SDK failed to load. Are you connected to the internet?",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // --- CRITICAL: MOCK BACKEND CALL FOR ORDER CREATION ---
+    // IN A REAL APPLICATION, YOU MUST CALL YOUR BACKEND API HERE 
+    // TO CREATE A RAZORPAY ORDER OBJECT SECURELY AND GET THE 'order_id'
+    // THE 'amount', 'currency' MUST BE CALCULATED ON THE BACKEND.
+    
+    // Simulating a backend API call to create an order
+    const data = {
+        order_id: `rzp_order_${Math.floor(Math.random() * 1000000)}`, // Replace with actual backend Order ID
+        currency: 'INR', // Replace with your actual currency
+        amount: amountInPaise, // Replace with actual backend amount in paise
+    }; 
+
+    if (!data.order_id) {
+        toast({
+            title: "Order Error",
+            description: "Failed to create order on the server.",
+            variant: "destructive"
+        });
+        setIsProcessing(false);
+        return;
+    }
+    // --- END MOCK BACKEND CALL ---
+
+    const options = {
+        key: RAZORPAY_KEY_ID, 
+        amount: data.amount, 
+        currency: data.currency,
+        name: "My Awesome Store",
+        description: "Payment for Order",
+        order_id: data.order_id, 
+        handler: function (response) {
+            // This handler is called on successful payment
+            
+            // CRITICAL: Call your backend API again to verify the payment signature
+            // using response.razorpay_payment_id and response.razorpay_order_id 
+            // and response.razorpay_signature for maximum security.
+            
+            const mockOrderId = `ORDER-${Math.floor(Math.random() * 1000000000)}`;
+            
+            toast({
+                title: "Order placed successfully! 🎉",
+                description: `Payment ID: ${response.razorpay_payment_id}. Your order ID is ${mockOrderId}.`,
+            });
+            
+            clearCart();
+            navigate(`/order/${mockOrderId}`);
+            setIsProcessing(false);
+        },
+        prefill: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            contact: formData.phone
+        },
+        theme: {
+            "color": "#FFC0CB" // A playful theme color
+        }
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.on('payment.failed', function (response) {
+        toast({
+            title: "Payment Failed",
+            description: `Error: ${response.error.code} - ${response.error.description}`,
+            variant: "destructive"
+        });
+        setIsProcessing(false);
+    });
+    paymentObject.open();
+  };
+  // ----------------------------------------------------
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validation (You should add comprehensive form validation here)
+    if (currentStep === 1) {
+        // Simple check for required fields in step 1
+        if (!formData.firstName || !formData.address || !formData.email) {
+            toast({ title: "Validation Error", description: "Please fill all required shipping fields.", variant: "destructive" });
+            return;
+        }
+        setCurrentStep(currentStep + 1);
+        return;
+    }
+    
+    if (currentStep === 2) {
+        // In a real application, you would validate payment info here, 
+        // but since we're using Razorpay to handle actual card details, 
+        // we'll just move to the review step.
+        setCurrentStep(currentStep + 1);
+        return;
+    }
+
+    // Current Step is 3 (Review/Place Order)
+    setIsProcessing(true);
+    
+    // 1. Call the Razorpay function instead of the mock API call
+    await displayRazorpay();
+    
+    // Note: setIsProcessing(false) is now handled inside displayRazorpay's handler/failure.
+    // The code execution stops here as Razorpay modal opens.
+  };
 
   if (state.items.length === 0) {
     return (
@@ -111,10 +224,9 @@ const Checkout = () => {
     );
   }
 
+  // --- COMPONENT RENDER (REMAINS LARGELY THE SAME) ---
   return (
     <div className="min-h-screen bg-background">
-      
-      
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back button */}
         <motion.button
@@ -310,114 +422,66 @@ const Checkout = () => {
                   </div>
                 </motion.div>
               )}
-
-              {/* Step 2: Payment Information */}
-              {/* {currentStep === 2 && (
+              
+              {/* Step 2: Payment Information & Shipping Method Selection (NEW/MODIFIED) */}
+              {currentStep === 2 && (
                 <motion.div
-                  className="bg-card rounded-3xl p-8"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
+                    className="bg-card rounded-3xl p-8 space-y-8"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
                 >
-                  <div className="flex items-center space-x-3 mb-6">
-                    <CreditCard className="text-primary" />
-                    <h2 className="text-2xl font-bold text-foreground font-kids">
-                      Payment Information
-                    </h2>
-                    <Lock size={20} className="text-success" />
-                  </div>
+                    {/* Payment Section - Simplified for Razorpay, as card inputs are in the modal */}
+                    <div className="flex items-center space-x-3 mb-6">
+                        <CreditCard className="text-primary" />
+                        <h2 className="text-2xl font-bold text-foreground font-kids">
+                            Payment Method
+                        </h2>
+                    </div>
+                    <div className="p-4 border-2 border-dashed border-primary/50 bg-primary/10 rounded-xl text-center">
+                        <p className="font-semibold text-primary">
+                            Payment will be securely processed by Razorpay.
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                            You will enter card details in a pop-up window after clicking 'Continue'.
+                        </p>
+                    </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Card Number *
-                      </label>
-                      <input
-                        type="text"
-                        name="cardNumber"
-                        required
-                        placeholder="1234 5678 9012 3456"
-                        value={formData.cardNumber}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background"
-                      />
+                    {/* Shipping Method Section */}
+                    <div className="flex items-center space-x-3 mb-6 pt-4 border-t border-border">
+                        <Package className="text-primary" />
+                        <h2 className="text-2xl font-bold text-foreground font-kids">
+                            Shipping Method
+                        </h2>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Expiry Date *
-                        </label>
-                        <input
-                          type="text"
-                          name="expiryDate"
-                          required
-                          placeholder="MM/YY"
-                          value={formData.expiryDate}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          CVV *
-                        </label>
-                        <input
-                          type="text"
-                          name="cvv"
-                          required
-                          placeholder="123"
-                          value={formData.cvv}
-                          onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background"
-                        />
-                      </div>
+                    <div className="space-y-4">
+                        {shippingMethods.map((method) => (
+                            <label
+                                key={method.id}
+                                className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all ${
+                                    formData.shippingMethod === method.id ? 'border-primary ring-2 ring-primary/50 bg-primary/5' : 'border-border bg-background hover:bg-muted/50'
+                                }`}
+                            >
+                                <div className="flex items-center">
+                                    <input
+                                        type="radio"
+                                        name="shippingMethod"
+                                        value={method.id}
+                                        checked={formData.shippingMethod === method.id}
+                                        onChange={handleInputChange}
+                                        className="h-5 w-5 text-primary focus:ring-primary border-border"
+                                    />
+                                    <div className="ml-4">
+                                        <p className="font-medium text-foreground">{method.name}</p>
+                                        
+                                    </div>
+                                </div>
+                                
+                            </label>
+                        ))}
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Name on Card *
-                      </label>
-                      <input
-                        type="text"
-                        name="cardName"
-                        required
-                        value={formData.cardName}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary bg-background"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Shipping Method */}
-                  {/* <div className="mt-8">
-                    <h3 className="text-lg font-semibold text-foreground mb-4">
-                      Shipping Method
-                    </h3>
-                    <div className="space-y-3">
-                      {shippingMethods.map((method) => (
-                        <label key={method.id} className="flex items-center justify-between p-4 border border-border rounded-xl cursor-pointer hover:border-primary transition-colors">
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="radio"
-                              name="shippingMethod"
-                              value={method.id}
-                              checked={formData.shippingMethod === method.id}
-                              onChange={handleInputChange}
-                              className="text-primary"
-                            />
-                            <div>
-                              <div className="font-medium text-foreground">{method.name}</div>
-                              <div className="text-sm text-muted-foreground">{method.time}</div>
-                            </div>
-                          </div>
-                          <div className="font-semibold text-primary">
-                            {method.price === 0 ? 'FREE' : `$${method.price}`}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
                 </motion.div>
-              )} */} 
-
+              )}
+              
               {/* Step 3: Review */}
               {currentStep === 3 && (
                 <motion.div
@@ -438,6 +502,8 @@ const Checkout = () => {
                       <h3 className="font-semibold text-foreground mb-4">Order Items</h3>
                       <div className="space-y-3">
                         {state.items.map((item) => (
+                          // NOTE: The total displayed here in the original code for each item was incorrect. 
+                          // It was showing the order's grand total. Corrected to show item total.
                           <div key={`${item.id}-${item.selectedColor}`} className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
                             <div className="flex items-center space-x-4">
                               <div className="text-3xl">{item.emoji}</div>
@@ -449,7 +515,7 @@ const Checkout = () => {
                               </div>
                             </div>
                             <div className="font-semibold text-primary">
-                              ${(total.toFixed(2))}
+                              ${(item.price * item.quantity).toFixed(2)}
                             </div>
                           </div>
                         ))}
@@ -470,9 +536,12 @@ const Checkout = () => {
                       <div>
                         <h3 className="font-semibold text-foreground mb-2">Payment Method</h3>
                         <div className="text-sm text-muted-foreground">
-                          <p>Card ending in {formData.cardNumber.slice(-4)}</p>
-                          <p>{formData.cardName}</p>
-                          <p>Expires {formData.expiryDate}</p>
+                          <p className="font-medium text-primary">Razorpay (Online Payment)</p>
+                          <p>Total amount: ${total.toFixed(2)}</p>
+                        </div>
+                        <h3 className="font-semibold text-foreground mt-4 mb-2">Shipping Method</h3>
+                        <div className="text-sm text-muted-foreground">
+                            <p>{shippingMethods.find(m => m.id === formData.shippingMethod)?.name}</p>
                         </div>
                       </div>
                     </div>
@@ -518,7 +587,7 @@ const Checkout = () => {
             </motion.form>
           </div>
 
-          {/* Order Summary */}
+          {/* Order Summary (REMAINS THE SAME) */}
           <motion.div
             className="lg:col-span-1"
             initial={{ opacity: 0, x: 20 }}
@@ -540,7 +609,7 @@ const Checkout = () => {
                   <span>{shippingCost === 0 ? 'FREE' : `$${shippingCost.toFixed(2)}`}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Tax</span>
+                  <span>Tax (8%)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
                 <div className="border-t border-border pt-4">
