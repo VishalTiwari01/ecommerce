@@ -31,7 +31,7 @@ const Navbar = () => {
       ],
     },
     { name: "Toys", path: "/category/toys" },
-    { name: "Water Bottles", path: "/category/bottles" },
+    { name: "Water Bottles", path: "/category/bottle" },
     { name: "Backpacks", path: "/category/backpacks" },
   ];
 

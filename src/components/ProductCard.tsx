@@ -132,7 +132,7 @@ const ProductCard = ({ product, index }) => {
       {/* Product Details */}
       <div className="space-y-3">
         <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-          {product.category}
+          {product.categoryId}
         </span>
 
         <h3 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors duration-200 font-kids">
