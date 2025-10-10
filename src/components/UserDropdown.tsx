@@ -1,7 +1,6 @@
-
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { User, LogOut, ShoppingBag, UserCircle2 } from "lucide-react";
+import { User, LogOut, ShoppingBag } from "lucide-react";
 
 const UserDropdown = ({
   isOpen,
@@ -9,7 +8,7 @@ const UserDropdown = ({
   isAuthenticated,
   onSignInClick,
   onLogout,
-  user, // ✅ Optional: pass user info from Navbar
+  user,
 }) => {
   return (
     <AnimatePresence>
@@ -23,25 +22,17 @@ const UserDropdown = ({
           <div className="flex flex-col py-2 text-sm">
             {isAuthenticated ? (
               <>
-                
-
-                {/* <Link
-                  to="/account"
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-muted text-foreground transition"
-                  onClick={onClose}
-                >
-                  <UserCircle2 size={18} />
-                  My Account
-                </Link> */}
-
-                <Link
-                  to="/order"
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-muted text-foreground transition"
-                  onClick={onClose}
-                >
-                  <ShoppingBag size={18} />
-                  My Orders
-                </Link>
+                {/* ✅ Only show if user and user._id exist */}
+                {user?._id && (
+                  <Link
+                    to={`/order/${user._id}`}
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-muted text-foreground transition"
+                    onClick={onClose}
+                  >
+                    <ShoppingBag size={18} />
+                    My Orders
+                  </Link>
+                )}
 
                 <button
                   className="flex items-center gap-2 px-4 py-2 hover:bg-muted text-left text-foreground transition"

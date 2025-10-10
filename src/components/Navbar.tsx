@@ -210,6 +210,7 @@ const Navbar = () => {
                 isAuthenticated={!!user}
                 onSignInClick={() => setIsModalOpen(true)}
                 onLogout={handleLogout}
+                 user={user}
               />
             </motion.div>
 

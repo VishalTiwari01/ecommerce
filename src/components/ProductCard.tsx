@@ -139,7 +139,7 @@ const ProductCard = ({ product, index }) => {
           {product.name}
         </h3>
 
-        <div className="flex items-center space-x-2">
+        {/* <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-1">
             {[...Array(5)].map((_, i) => (
               <Star
@@ -156,7 +156,7 @@ const ProductCard = ({ product, index }) => {
           <span className="text-sm text-muted-foreground">
             ({product.rating || 0})
           </span>
-        </div>
+        </div> */}
 
         {product.colors && product.colors.length > 0 && (
           <div className="flex items-center space-x-2">

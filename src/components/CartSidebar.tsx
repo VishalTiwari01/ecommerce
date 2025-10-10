@@ -157,7 +157,7 @@ const CartSidebar = () => {
                               <span className="text-xs text-muted-foreground">{item.category}</span>
                             </div>
                             <p className="text-sm font-bold text-primary mt-1">
-                              ${item.price.toFixed(2)}
+                              ₹{item.price.toFixed(2)}
                             </p>
                           </div>
                           <div className="flex items-center space-x-2">
@@ -202,12 +202,12 @@ const CartSidebar = () => {
                 <div className="border-t border-border p-6 space-y-4">
                   <div className="flex justify-between items-center text-sm text-muted-foreground">
                     <span>Subtotal:</span>
-                    <span>${calculateSubtotal().toFixed(2)}</span>
+                    <span>₹{calculateSubtotal().toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold text-foreground">Total:</span>
                     <span className="text-2xl font-bold text-primary">
-                      ${state.total.toFixed(2)}
+                      ₹{state.total.toFixed(2)}
                     </span>
                   </div>
 
