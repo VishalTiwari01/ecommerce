@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
 import Logo from "../assest/logoA.png";
-import { loginUser } from "../API/api";
+import { loginUser } from "../APi/api";
 
 const SignInModal = ({ isOpen, onClose, onSignIn }) => {
   const [mobile, setMobile] = useState("");
