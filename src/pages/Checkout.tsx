@@ -45,7 +45,7 @@ const Checkout = () => {
     city: "",
     state: "",
     postalCode: "",
-    notes: '',
+    notes: "",
     country: "India",
     shippingMethod: "Cash on Delivery",
   });
@@ -74,7 +74,7 @@ const Checkout = () => {
   const subtotal = state.total;
   const shippingAmount = 0; // or compute if you have a shipping rate
   const taxRate = 0.08;
-  const discountAmount = 0.00; 
+  const discountAmount = 0.0;
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + shippingAmount + taxAmount;
   const amountInPaise = Math.round(totalAmount * 100);
@@ -207,8 +207,7 @@ const Checkout = () => {
         unitPrice: item.price,
         totalPrice: parseFloat((item.price * item.quantity).toFixed(2)),
         productName: item.name,
-        productSku: item.sku || 'N/A',
-        
+        productSku: item.sku || "N/A",
       })),
       billingAddress: {
         type: "billing",
@@ -226,7 +225,7 @@ const Checkout = () => {
         type: "shipping",
         name: `${formData.firstName} ${formData.lastName}`,
         addressLine1: formData.addressLine1,
-        
+
         city: formData.city,
         state: formData.state,
         postalCode: formData.postalCode,
@@ -238,7 +237,6 @@ const Checkout = () => {
 
       discountAmount: parseFloat(discountAmount.toFixed(2)),
       totalAmount: parseFloat(totalAmount.toFixed(2)),
-      
     };
 
     if (formData.shippingMethod === "Cash on Delivery") {
@@ -252,12 +250,12 @@ const Checkout = () => {
         const order = await createOrder(orderData);
 
         toast({
-  title: "Order placed successfully! 🎉",
-  description: `Order ID: ${order._id}`,
-});
+          title: "Order placed successfully! 🎉",
+          description: `Order ID: ${order._id}`,
+        });
 
-clearCart();
-navigate(`/order/${userId}`);
+        clearCart();
+        navigate(`/order/${userId}`);
       } catch (err: any) {
         toast({
           title: "Order Failed",
@@ -289,12 +287,12 @@ navigate(`/order/${userId}`);
         const order = await createOrder(orderData);
 
         toast({
-  title: "Order placed successfully! 🎉",
-  description: `Payment ID: ${paymentResponse.razorpay_payment_id}, Order ID: ${order._id}`,
-});
+          title: "Order placed successfully! 🎉",
+          description: `Payment ID: ${paymentResponse.razorpay_payment_id}, Order ID: ${order._id}`,
+        });
 
-clearCart();
-navigate(`/order/${userId}`);
+        clearCart();
+        navigate(`/order/${userId}`);
       } catch (err: any) {
         console.error("Payment / Order error:", err);
         toast({
@@ -410,147 +408,180 @@ navigate(`/order/${userId}`);
             >
               {/* Step 1: Shipping + address + optional fields */}
               {currentStep === 1 && (
-                <motion.div
-                  className="bg-card rounded-3xl p-8"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                >
-                  <div className="flex items-center space-x-3 mb-6">
-                    <User className="text-primary" />
-                    <h2 className="text-2xl font-bold">Shipping Information</h2>
-                  </div>
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        First Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={formData.firstName}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Last Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        value={formData.lastName}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Email Address *
-                      </label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium mb-2">
-                        Company (optional)
-                      </label>
-                      <input
-                        type="text"
-                        name="company"
-                        value={formData.company}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium mb-2">
-                        Street Address *
-                      </label>
-                      <input
-                        type="text"
-                        name="addressLine1"
-                        value={formData.addressLine1}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium mb-2">
-                        Address Line 2 (optional)
-                      </label>
-                      <input
-                        type="text"
-                        name="addressLine2"
-                        value={formData.addressLine2}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font.medium mb-2">
-                        City *
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        State *
-                      </label>
-                      <input
-                        type="text"
-                        name="state"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        ZIP Code *
-                      </label>
-                      <input
-                        type="text"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
-                      />
-                    </div>
-                  </div>
-                  
-                </motion.div>
+              <motion.div
+  className="bg-card rounded-3xl p-8 shadow-md"
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+>
+  <div className="flex items-center space-x-3 mb-8">
+    <User className="text-primary w-6 h-6" />
+    <h2 className="text-2xl font-bold text-gray-800">Shipping Information</h2>
+  </div>
+
+  <div className="grid md:grid-cols-2 gap-6">
+    {/* First Name */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        First Name *
+      </label>
+      <input
+        type="text"
+        name="firstName"
+        value={formData.firstName}
+        onChange={handleInputChange}
+        required
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* Last Name */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Last Name *
+      </label>
+      <input
+        type="text"
+        name="lastName"
+        value={formData.lastName}
+        onChange={handleInputChange}
+        required
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* Email */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Email Address *
+      </label>
+      <input
+        type="email"
+        name="email"
+        value={formData.email}
+        onChange={handleInputChange}
+        required
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* Phone Number with Country Code */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Phone Number *
+      </label>
+      <div className="flex rounded-xl overflow-hidden border focus-within:ring-2 focus-within:ring-primary">
+        <select
+          name="countryCode"
+          value={formData.countryCode}
+          onChange={handleInputChange}
+          className="px-3 py-3 bg-gray-100 text-gray-700 border-r outline-none"
+        >
+          <option value="+91">🇮🇳 +91</option>
+          <option value="+1">🇺🇸 +1</option>
+          <option value="+44">🇬🇧 +44</option>
+        </select>
+        <input
+          type="tel"
+          name="phone"
+          value={formData.phone}
+          onChange={handleInputChange}
+          required
+          className="w-full px-4 py-3 outline-none"
+          placeholder="Enter phone number"
+        />
+      </div>
+    </div>
+
+    {/* Company (Optional) */}
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Company (optional)
+      </label>
+      <input
+        type="text"
+        name="company"
+        value={formData.company}
+        onChange={handleInputChange}
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* Address Line 1 */}
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Street Address *
+      </label>
+      <input
+        type="text"
+        name="addressLine1"
+        value={formData.addressLine1}
+        onChange={handleInputChange}
+        required
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* Address Line 2 */}
+    <div className="md:col-span-2">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        Address Line 2 (optional)
+      </label>
+      <input
+        type="text"
+        name="addressLine2"
+        value={formData.addressLine2}
+        onChange={handleInputChange}
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* City */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        City *
+      </label>
+      <input
+        type="text"
+        name="city"
+        value={formData.city}
+        onChange={handleInputChange}
+        required
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* State */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        State *
+      </label>
+      <input
+        type="text"
+        name="state"
+        value={formData.state}
+        onChange={handleInputChange}
+        required
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+
+    {/* ZIP Code */}
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        ZIP Code *
+      </label>
+      <input
+        type="text"
+        name="postalCode"
+        value={formData.postalCode}
+        onChange={handleInputChange}
+        required
+        className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
+      />
+    </div>
+  </div>
+</motion.div>
+
               )}
 
               {/* Step 2: Payment & shipping method */}
@@ -658,7 +689,8 @@ navigate(`/order/${userId}`);
                             {formData.addressLine1} {formData.addressLine2}
                           </p>
                           <p>
-                            {formData.city}, {formData.state} {formData.postalCode}
+                            {formData.city}, {formData.state}{" "}
+                            {formData.postalCode}
                           </p>
                           <p>{formData.email}</p>
                         </div>
@@ -674,7 +706,6 @@ navigate(`/order/${userId}`);
                               : "Razorpay (Online)"}
                           </p>
                           <p>Total: ₹{totalAmount.toFixed(2)}</p>
-                          
                         </div>
                       </div>
                     </div>
@@ -748,7 +779,9 @@ navigate(`/order/${userId}`);
                 <div className="border-t border-border pt-4">
                   <div className="flex justify-between text-xl font-bold">
                     <span>Total</span>
-                    <span className="text-primary">₹{totalAmount.toFixed(2)}</span>
+                    <span className="text-primary">
+                      ₹{totalAmount.toFixed(2)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1079,18 +1112,18 @@ export default Checkout;
 
 //     // Base Order Data object matching the JSON structure
 // const baseOrderData = {
-  // userId,
-  // orderNumber: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000)}`,
-  // items: orderItems,
-  // billingAddress,
-  // shippingAddress,
-  // subtotal: parseFloat(subtotal.toFixed(2)),
-  // taxAmount: parseFloat(taxAmount.toFixed(2)),
-  // shippingAmount: parseFloat(shippingAmount.toFixed(2)),
-  // discountAmount: parseFloat(discountAmount.toFixed(2)),
-  // totalAmount: parseFloat(totalAmount.toFixed(2)),
-  // currency: "INR",
-  // notes: formData.notes,
+// userId,
+// orderNumber: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000)}`,
+// items: orderItems,
+// billingAddress,
+// shippingAddress,
+// subtotal: parseFloat(subtotal.toFixed(2)),
+// taxAmount: parseFloat(taxAmount.toFixed(2)),
+// shippingAmount: parseFloat(shippingAmount.toFixed(2)),
+// discountAmount: parseFloat(discountAmount.toFixed(2)),
+// totalAmount: parseFloat(totalAmount.toFixed(2)),
+// currency: "INR",
+// notes: formData.notes,
 // };
 
 //     if (formData.shippingMethod === 'Cash on Delivery') {
