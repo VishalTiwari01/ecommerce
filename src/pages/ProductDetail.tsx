@@ -350,7 +350,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useCart } from '../contexts/CartContext';
 import { toast } from '../hooks/use-toast';
-import { getProductsId } from '../api/api';
+import { getProductsId } from '../APi/api';
 
 const ProductDetail = () => {
   const { id } = useParams();
