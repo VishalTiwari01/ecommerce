@@ -174,12 +174,20 @@ const InstagramReels = () => {
           >
             <div className="flex flex-col gap-3">
               <div className="flex items-start gap-3">
-                <AlertCircle className="text-yellow-600 flex-shrink-0 mt-1" size={24} />
+                <AlertCircle
+                  className="text-yellow-600 flex-shrink-0 mt-1"
+                  size={24}
+                />
                 <div>
-                  <h3 className="font-semibold text-yellow-900 mb-2">API Setup Required</h3>
-                  <p className="text-yellow-800 text-sm mb-3">{error}. Showing demo reels instead.</p>
+                  <h3 className="font-semibold text-yellow-900 mb-2">
+                    API Setup Required
+                  </h3>
+                  <p className="text-yellow-800 text-sm mb-3">
+                    {error}. Showing demo reels instead.
+                  </p>
                   <p className="text-yellow-700 text-xs">
-                    To enable automatic fetching, sign up at RapidAPI and replace YOUR_RAPIDAPI_KEY_HERE in the code.
+                    To enable automatic fetching, sign up at RapidAPI and
+                    replace YOUR_RAPIDAPI_KEY_HERE in the code.
                   </p>
                 </div>
               </div>
@@ -242,16 +250,16 @@ const InstagramReels = () => {
                   {/* Reel Iframe Responsive */}
                   <div className="relative aspect-video">
                     <iframe
-  src={reel.url}
-  width="100%"
-  height="600"  // increased from 600 to 800
-  frameBorder="0"
-  allowFullScreen
-  loading="lazy"
-  title={`Instagram Reel ${index + 1}`}
-  className="w-full"
-  allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-/>
+                      src={reel.url}
+                      width="100%"
+                      height="600"
+                      frameBorder="0"
+                      allowFullScreen
+                      loading="lazy"
+                      title={`Instagram Reel ${index + 1}`}
+                      className="w-full"
+                      allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                    />
                   </div>
 
                   {/* View Original Link Overlay */}
@@ -280,7 +288,9 @@ const InstagramReels = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
         >
-          <h3 className="text-2xl font-bold mb-4 text-gray-800">🚀 Setup Instructions</h3>
+          <h3 className="text-2xl font-bold mb-4 text-gray-800">
+            🚀 Setup Instructions
+          </h3>
           <div className="space-y-4 text-gray-700">
             <div className="flex gap-3">
               <span className="font-bold text-purple-600">1.</span>
@@ -303,9 +313,12 @@ const InstagramReels = () => {
             <div className="flex gap-3">
               <span className="font-bold text-purple-600">2.</span>
               <div>
-                <p className="font-semibold">Subscribe to Instagram Scraper API</p>
+                <p className="font-semibold">
+                  Subscribe to Instagram Scraper API
+                </p>
                 <p className="text-sm text-gray-600">
-                  Search for "Instagram Scraper Stable API" and subscribe to the free plan
+                  Search for "Instagram Scraper Stable API" and subscribe to the
+                  free plan
                 </p>
               </div>
             </div>
@@ -313,7 +326,9 @@ const InstagramReels = () => {
               <span className="font-bold text-purple-600">3.</span>
               <div>
                 <p className="font-semibold">Get Your API Key</p>
-                <p className="text-sm text-gray-600">Copy your RapidAPI key from the dashboard</p>
+                <p className="text-sm text-gray-600">
+                  Copy your RapidAPI key from the dashboard
+                </p>
               </div>
             </div>
             <div className="flex gap-3">
@@ -321,7 +336,11 @@ const InstagramReels = () => {
               <div>
                 <p className="font-semibold">Replace API Key in Code</p>
                 <p className="text-sm text-gray-600">
-                  Find <code className="bg-gray-100 px-2 py-1 rounded">YOUR_RAPIDAPI_KEY_HERE</code> and replace with your actual key
+                  Find{" "}
+                  <code className="bg-gray-100 px-2 py-1 rounded">
+                    YOUR_RAPIDAPI_KEY_HERE
+                  </code>{" "}
+                  and replace with your actual key
                 </p>
               </div>
             </div>
@@ -329,7 +348,8 @@ const InstagramReels = () => {
 
           <div className="mt-6 p-4 bg-purple-50 rounded-xl border-2 border-purple-200">
             <p className="text-sm text-purple-900">
-              <strong>Free Tier:</strong> RapidAPI offers a free plan with limited requests per month. Perfect for personal projects!
+              <strong>Free Tier:</strong> RapidAPI offers a free plan with
+              limited requests per month. Perfect for personal projects!
             </p>
           </div>
         </motion.div>
