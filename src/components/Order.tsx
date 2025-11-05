@@ -16,7 +16,6 @@ const Order = () => {
       const data = await getUserOrders(userId);
 
       if (Array.isArray(data) && data.length > 0) {
-        // Sort orders by date (latest first)
         const sortedOrders = data.sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
         );

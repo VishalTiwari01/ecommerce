@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { toast } from "../hooks/use-toast";
-import { createOrder } from "../APi/api.js";
+import { createOrder } from "../APi/api.js"; // Assuming this path is correct
 
 // Dynamically load Razorpay script
-const loadRazorpayScript = (src: string): Promise<boolean> => {
+const loadRazorpayScript = (src) => {
   return new Promise((resolve) => {
     const script = document.createElement("script");
     script.src = src;
@@ -25,14 +25,15 @@ const loadRazorpayScript = (src: string): Promise<boolean> => {
   });
 };
 
-const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_KEY_ID"; // Replace with your key
+// NOTE: Remember to replace this with your actual Key ID
+const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_KEY_ID"; 
 
 const Checkout = () => {
   const { state, clearCart } = useCart();
   const navigate = useNavigate();
 
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -48,7 +49,6 @@ const Checkout = () => {
     notes: "",
     country: "India",
     shippingMethod: "Cash on Delivery",
-    // Added countryCode for the select element, default to India's code
     countryCode: "+91", 
   });
 
@@ -64,7 +64,7 @@ const Checkout = () => {
   ];
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -114,15 +114,15 @@ const Checkout = () => {
       return null;
     }
 
-    return new Promise<any>((resolve, reject) => {
-      const options: any = {
+    return new Promise((resolve, reject) => {
+      const options = {
         key: RAZORPAY_KEY_ID,
         amount: data.amount,
         currency: data.currency,
         name: "My Awesome Store",
         description: "Payment for your order",
         order_id: data.order_id,
-        handler: function (response: any) {
+        handler: function (response) {
           resolve(response);
         },
         prefill: {
@@ -136,28 +136,33 @@ const Checkout = () => {
         },
       };
 
-      const paymentObject = new (window as any).Razorpay(options);
-      paymentObject.on("payment.failed", (err: any) => {
+      const paymentObject = new (window).Razorpay(options);
+      paymentObject.on("payment.failed", (err) => {
         reject(err);
       });
       paymentObject.open();
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Step navigation logic
     if (currentStep === 1) {
+      // --- FIX: Add comprehensive validation for ALL required fields ---
       if (
         !formData.firstName ||
-        !formData.addressLine1 ||
+        !formData.lastName ||
         !formData.email ||
+        !formData.phone ||
+        !formData.addressLine1 ||
+        !formData.city ||
+        !formData.state ||
         !formData.postalCode
       ) {
         toast({
           title: "Validation Error",
-          description: "Please fill all required shipping fields.",
+          description: "Please fill all required shipping fields (marked with *).",
           variant: "destructive",
         });
         return;
@@ -176,11 +181,12 @@ const Checkout = () => {
 
     // Get userId from localStorage (or however your auth works)
     const storedUser = localStorage.getItem("user");
-    let userId: string | null = null;
+    let userId = null;
     if (storedUser) {
       try {
         const userObj = JSON.parse(storedUser);
-        userId = userObj?.user?._id || userObj?._id || null;
+        // Assuming user data is stored as { user: { _id: '...' } } or just { _id: '...' }
+        userId = userObj?.user?._id || userObj?._id || null; 
       } catch (err) {
         console.error("Error parsing stored user:", err);
       }
@@ -196,8 +202,11 @@ const Checkout = () => {
       return;
     }
 
+    // --- FIX: Ensure a combined phone number is used for contact fields ---
+    const fullPhoneNumber = `${formData.countryCode}${formData.phone}`;
+
     // Prepare base order payload
-    const baseOrderData: any = {
+    const baseOrderData = {
       userId,
       orderNumber: `ORD-${new Date()
         .toISOString()
@@ -205,6 +214,7 @@ const Checkout = () => {
         .replace(/-/g, "")}-${Math.floor(Math.random() * 1000)}`,
       currency: "INR",
       items: state.items.map((item) => ({
+        // Ensure item data is correct and matches backend schema
         productId: item.id,
         quantity: item.quantity,
         unitPrice: item.price,
@@ -222,25 +232,33 @@ const Checkout = () => {
         state: formData.state,
         postalCode: formData.postalCode,
         country: formData.country,
-        phone: formData.phone,
+        // Using the full number
+        phone: fullPhoneNumber, 
       },
       shippingAddress: {
         type: "shipping",
         name: `${formData.firstName} ${formData.lastName}`,
         addressLine1: formData.addressLine1,
-
+        addressLine2: formData.addressLine2, // Include this for completeness
         city: formData.city,
         state: formData.state,
         postalCode: formData.postalCode,
         country: formData.country,
+        // Added phone here as backends often require it in both
+        phone: fullPhoneNumber, 
       },
       subtotal: parseFloat(subtotal.toFixed(2)),
       taxAmount: parseFloat(taxAmount.toFixed(2)),
       shippingAmount: shippingAmount,
-
       discountAmount: parseFloat(discountAmount.toFixed(2)),
       totalAmount: parseFloat(totalAmount.toFixed(2)),
+      // Backend might expect status fields on initial creation
+      orderStatus: "Pending", // Default status
+      paymentStatus: "Pending", // Default status
     };
+    
+    // --- Log payload for debugging ---
+    console.log("Order Payload being sent:", baseOrderData);
 
     if (formData.shippingMethod === "Cash on Delivery") {
       // COD flow
@@ -248,6 +266,7 @@ const Checkout = () => {
         const orderData = {
           ...baseOrderData,
           paymentMethod: "cod",
+          paymentStatus: "Pending", // COD is usually 'Pending' or 'Unpaid'
         };
 
         const order = await createOrder(orderData);
@@ -259,7 +278,8 @@ const Checkout = () => {
 
         clearCart();
         navigate(`/order/${userId}`);
-      } catch (err: any) {
+      } catch (err) {
+        console.error("COD Order Failed:", err);
         toast({
           title: "Order Failed",
           description: err.message || "Something went wrong.",
@@ -280,10 +300,15 @@ const Checkout = () => {
         const orderData = {
           ...baseOrderData,
           paymentMethod: "credit_card",
+          paymentStatus: "Paid", // Payment is successful at this point
+          orderStatus: "Processing", // Or whatever your initial paid status is
           paymentInfo: {
             id: paymentResponse.razorpay_payment_id,
             order_id: paymentResponse.razorpay_order_id,
             signature: paymentResponse.razorpay_signature,
+            // Include currency and amount for backend verification
+            currency: baseOrderData.currency,
+            amount: amountInPaise / 100, // Send amount in Rupee
           },
         };
 
@@ -296,8 +321,9 @@ const Checkout = () => {
 
         clearCart();
         navigate(`/order/${userId}`);
-      } catch (err: any) {
+      } catch (err) {
         console.error("Payment / Order error:", err);
+        // Display user-friendly error from backend or generic message
         toast({
           title: "Payment / Order Failed",
           description:
@@ -309,6 +335,8 @@ const Checkout = () => {
       }
     }
   };
+
+  // ... (rest of the component JSX remains the same, except for the input labels)
 
   if (state.items.length === 0) {
     return (
@@ -431,7 +459,7 @@ const Checkout = () => {
                     {/* First Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name *
+                        First Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -446,7 +474,7 @@ const Checkout = () => {
                     {/* Last Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name *
+                        Last Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -461,7 +489,7 @@ const Checkout = () => {
                     {/* Email */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email Address *
+                        Email Address <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -476,7 +504,7 @@ const Checkout = () => {
                     {/* Phone Number with Country Code - IMPROVED RESPONSIVENESS for input group */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number *
+                        Phone Number <span className="text-red-500">*</span>
                       </label>
                       <div className="flex rounded-xl overflow-hidden border focus-within:ring-2 focus-within:ring-primary">
                         <select
@@ -519,7 +547,7 @@ const Checkout = () => {
                     {/* Address Line 1 */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Street Address *
+                        Street Address <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -548,7 +576,7 @@ const Checkout = () => {
                     {/* City */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City *
+                        City <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -563,7 +591,7 @@ const Checkout = () => {
                     {/* State */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        State *
+                        State <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -578,7 +606,7 @@ const Checkout = () => {
                     {/* ZIP Code */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        ZIP Code *
+                        ZIP Code <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"

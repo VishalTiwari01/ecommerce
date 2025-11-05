@@ -1,8 +1,7 @@
-
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
-import { getAllProducts } from '../APi/api';
+import { getAllProducts } from '../api/api';
 import { toast } from '../hooks/use-toast';
 
 const ProductShowcase = () => {
@@ -79,7 +78,7 @@ const ProductShowcase = () => {
           ))}
         </div>
 
-        <motion.div 
+        {/* <motion.div 
           className="text-center mt-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -91,9 +90,9 @@ const ProductShowcase = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            See All Products 🎉
+            
           </motion.button>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );

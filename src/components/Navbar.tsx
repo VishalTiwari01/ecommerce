@@ -30,10 +30,36 @@ const Navbar = () => {
         { name: "Best Sellers", path: "/category/bestsellers" },
       ],
     },
-    { name: "Toys", path: "/category/toys" },
-    { name: "Water Bottles", path: "/category/bottle" },
-    { name: "Backpacks", path: "/category/backpacks" },
-  ];
+    {
+      name: "Toys & Games",
+      subCategories: [
+        { name: "Balls", path: "/category/balls" },
+        { name: "Cards", path: "/category/cards" },
+        { name: "Educational", path: "/category/educational" },
+        { name: "Games", path: "/category/games" },
+       { name: "Toys", path: "/category/toys" },
+      ],
+    },
+    {
+      name: "Water Bottles",
+      subCategories: [
+        { name: "Bottles", path: "/category/bottle" },
+        { name: "Mugs", path: "/category/mug" },
+        { name: "Sippers", path: "/category/sipper" },
+        { name: "Tumblers", path: "/category/tumbler" }
+      ],
+    },
+    {
+      name: "Bags & Pouches",
+      subCategories: [
+        { name: "Bags", path: "/category/bag" },
+        { name: "Pouches", path: "/category/pouche" },
+        { name: "Duffle Bags", path: "/category/duffle" },
+        { name: "Luggage", path: "/category/luggage" },
+       { name: "Sling Bags", path: "/category/sling" },
+      ],
+    },
+   ];
 
   const handleLogout = () => {
     dispatch(signOut());
@@ -93,7 +119,7 @@ const Navbar = () => {
                   <AnimatePresence>
                     {hoveredMenu === item.name && (
                       <motion.div
-                        className="absolute top-full left-1/3 transform -translate-x-1/2 w-screen max-w-2xl bg-card shadow-playful rounded-b-3xl border border-border mt-4"
+                        className="absolute top-full left-0 transform -translate-x-1/2 w-screen max-w-lg bg-card shadow-playful rounded-b-3xl border border-border mt-4"
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -101,7 +127,7 @@ const Navbar = () => {
                       >
                         <div className="grid grid-cols-2 gap-8 p-8">
                           <div>
-                            <h3 className="text-lg font-bold text-primary mb-4">Shop by Age</h3>
+                            {/* <h3 className="text-lg font-bold text-primary mb-4">Shop by Age</h3> */}
                             <div className="space-y-3">
                               {item.subCategories.map((subItem) => (
                                 <Link

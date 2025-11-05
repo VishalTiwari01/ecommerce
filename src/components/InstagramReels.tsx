@@ -173,7 +173,7 @@ const InstagramReels = () => {
             animate={{ opacity: 1, scale: 1 }}
           >
             <div className="flex flex-col gap-3">
-              <div className="flex items-start gap-3">
+              {/* <div className="flex items-start gap-3">
                 <AlertCircle
                   className="text-yellow-600 flex-shrink-0 mt-1"
                   size={24}
@@ -190,7 +190,7 @@ const InstagramReels = () => {
                     replace YOUR_RAPIDAPI_KEY_HERE in the code.
                   </p>
                 </div>
-              </div>
+              </div> */}
               <button
                 onClick={fetchReels}
                 className="self-start px-4 py-2 bg-yellow-400 text-yellow-900 rounded font-semibold hover:bg-yellow-500 transition"
@@ -282,7 +282,7 @@ const InstagramReels = () => {
         )}
 
         {/* Setup Instructions */}
-        <motion.div
+        {/* <motion.div
           className="mt-16 bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg max-w-3xl mx-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -352,7 +352,7 @@ const InstagramReels = () => {
               limited requests per month. Perfect for personal projects!
             </p>
           </div>
-        </motion.div>
+        </motion.div> */}
       </div>
     </section>
   );
