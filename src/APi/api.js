@@ -138,3 +138,12 @@ export const getUserOrders = async (userId) => {
     throw error;
   }
 };
+
+
+export const Razorpay = () =>{
+  try {
+    
+  } catch (error) {
+    
+  }
+}
