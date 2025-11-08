@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   CreditCard,
@@ -12,21 +13,18 @@ import {
 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { toast } from "../hooks/use-toast";
-import { createOrder } from "../APi/api.js"; // Assuming this path is correct
+import {
+  createOrder,
+  getRazorpayKey,
+  verifyPayment
+} from "../APi/api.js";
 
-// Dynamically load Razorpay script
-const loadRazorpayScript = (src) => {
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = src;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-// NOTE: Remember to replace this with your actual Key ID
-const RAZORPAY_KEY_ID = "YOUR_RAZORPAY_KEY_ID"; 
+// TypeScript declaration for Razorpay
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 const Checkout = () => {
   const { state, clearCart } = useCart();
@@ -49,7 +47,7 @@ const Checkout = () => {
     notes: "",
     country: "India",
     shippingMethod: "Cash on Delivery",
-    countryCode: "+91", 
+    countryCode: "+91",
   });
 
   const steps = [
@@ -63,9 +61,7 @@ const Checkout = () => {
     { id: "Online", name: "Pay with Razorpay (Online)" },
   ];
 
-  const handleInputChange = (
-    e
-  ) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -74,74 +70,215 @@ const Checkout = () => {
   };
 
   const subtotal = state.total;
-  const shippingAmount = 0; // or compute if you have a shipping rate
+  const shippingAmount = 0;
   const taxRate = 0.08;
   const discountAmount = 0.0;
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + shippingAmount + taxAmount;
-  const amountInPaise = Math.round(totalAmount * 100);
+
+  // Dynamically load Razorpay script
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (typeof window.Razorpay !== 'undefined') {
+        console.log("Razorpay already loaded");
+        resolve(true);
+        return;
+      }
+      
+      // Check if script already exists
+      const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+      if (existingScript) {
+        console.log("Razorpay script tag exists, waiting for load");
+        // Wait a bit for it to load
+        setTimeout(() => {
+          if (typeof window.Razorpay !== 'undefined') {
+            console.log("Razorpay loaded from existing script");
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }, 500);
+        return;
+      }
+      
+      console.log("Loading Razorpay script...");
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      
+      script.onload = () => {
+        console.log("Razorpay script loaded successfully");
+        // Give it a moment to initialize
+        setTimeout(() => {
+          if (typeof window.Razorpay !== 'undefined') {
+            resolve(true);
+          } else {
+            console.error("Razorpay script loaded but Razorpay object not found");
+            resolve(false);
+          }
+        }, 100);
+      };
+      
+      script.onerror = (error) => {
+        console.error("Failed to load Razorpay script:", error);
+        resolve(false);
+      };
+      
+      document.head.appendChild(script);
+    });
+  };
+
+  const createPaymentOrder = async (orderId) => {
+    try {
+      console.log("Creating payment order for order ID:", orderId);
+      const response = await axios.post(`http://localhost:1209/api/orders/${orderId}/checkout`);
+      console.log("Payment order created:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating payment order:', error);
+      throw error;
+    }
+  };
 
   // Razorpay integration
-  const displayRazorpay = async () => {
-    const loaded = await loadRazorpayScript(
-      "https://checkout.razorpay.com/v1/checkout.js"
-    );
-    if (!loaded) {
-      toast({
-        title: "Payment Gateway Error",
-        description: "Razorpay SDK failed to load. Are you online?",
-        variant: "destructive",
+  const displayRazorpay = async (orderData) => {
+    try {
+      // Load Razorpay script
+      const isScriptLoaded = await loadRazorpayScript();
+      console.log("Razorpay script loaded:", isScriptLoaded);
+      
+      if (!isScriptLoaded) {
+        toast({
+          title: "Payment Gateway Error",
+          description: "Razorpay SDK failed to load. Please check your internet connection.",
+          variant: "destructive",
+        });
+        throw new Error("Failed to load Razorpay script");
+      }
+
+      // Verify Razorpay is available
+      if (typeof window.Razorpay === 'undefined') {
+        console.error("Razorpay object not found on window");
+        toast({
+          title: "Payment Gateway Error",
+          description: "Payment gateway not initialized. Please refresh and try again.",
+          variant: "destructive",
+        });
+        throw new Error("Razorpay not initialized");
+      }
+
+      const razorpayKey = "rzp_test_RBaYPZbM1oDXUD"; // Replace with your actual key
+
+      console.log("Payment Order Data:", JSON.stringify(orderData, null, 2));
+      console.log("Razorpay Key:", razorpayKey);
+
+      // Validate order data
+      if (!orderData.orderId || !orderData.amount) {
+        console.error("Invalid order data:", orderData);
+        toast({
+          title: "Order Error",
+          description: "Invalid payment order data. Please try again.",
+          variant: "destructive",
+        });
+        throw new Error("Invalid order data");
+      }
+
+      return new Promise((resolve, reject) => {
+        // Create options object without directly assigning to avoid XrayWrapper issues
+        const razorpayOptions = {
+          key: razorpayKey,
+          amount: orderData.amount,
+          currency: "INR",
+          name: "Techie Delight",
+          description: `Order Payment - ${orderData.orderNumber}`,
+          order_id: orderData.orderId,
+          prefill: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            contact: `${formData.countryCode}${formData.phone}`,
+          },
+          theme: {
+            color: '#8B5CF6',
+          },
+          handler: function(response) {
+            console.log('Payment success response:', response);
+            
+            // Verify payment on backend
+            verifyPayment(
+              response.razorpay_order_id,
+              response.razorpay_payment_id,
+              response.razorpay_signature
+            )
+            .then((result) => {
+              console.log('Payment verification result:', result);
+              
+              if (result && result.verified) {
+                resolve(response);
+              } else {
+                throw new Error("Payment verification failed");
+              }
+            })
+            .catch((error) => {
+              console.error('Payment verification failed:', error);
+              toast({
+                title: "Payment Verification Failed",
+                description: "Please contact support with your payment details.",
+                variant: "destructive",
+              });
+              reject(error);
+            });
+          },
+          modal: {
+            ondismiss: function() {
+              console.log("Payment modal dismissed by user");
+              toast({
+                title: "Payment Cancelled",
+                description: "You cancelled the payment. Please try again to complete your order.",
+                variant: "destructive",
+              });
+              reject(new Error("Payment cancelled by user"));
+            }
+          }
+        };
+
+        console.log("Creating Razorpay instance with options");
+
+        try {
+          // Create Razorpay instance
+          const RazorpayConstructor = window.Razorpay;
+          const razorpayInstance = new RazorpayConstructor(razorpayOptions);
+          
+          console.log("Razorpay instance created");
+
+          // Handle payment failure
+          razorpayInstance.on('payment.failed', function(response) {
+            console.error('Payment Failed:', response.error);
+            toast({
+              title: "Payment Failed",
+              description: response.error.description || "Payment failed. Please try again.",
+              variant: "destructive",
+            });
+            reject(response.error);
+          });
+
+          console.log("Opening Razorpay modal...");
+          razorpayInstance.open();
+          console.log("Razorpay modal opened");
+        } catch (error) {
+          console.error("Error creating/opening Razorpay:", error);
+          toast({
+            title: "Payment Gateway Error",
+            description: "Failed to open payment gateway. Please try again.",
+            variant: "destructive",
+          });
+          reject(error);
+        }
       });
-      setIsProcessing(false);
-      return null;
+    } catch (error) {
+      console.error("Error in displayRazorpay:", error);
+      throw error;
     }
-
-    // In real usage, call backend to create an order and return order_id, amount etc.
-    // Here we mock
-    const data = {
-      order_id: `rzp_order_${Math.floor(Math.random() * 1000000)}`,
-      currency: "INR",
-      amount: amountInPaise,
-    };
-
-    if (!data.order_id) {
-      toast({
-        title: "Order Creation Error",
-        description: "Failed to get order id from server.",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-      return null;
-    }
-
-    return new Promise((resolve, reject) => {
-      const options = {
-        key: RAZORPAY_KEY_ID,
-        amount: data.amount,
-        currency: data.currency,
-        name: "My Awesome Store",
-        description: "Payment for your order",
-        order_id: data.order_id,
-        handler: function (response) {
-          resolve(response);
-        },
-        prefill: {
-          name: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          // Use the full number including the country code
-          contact: `${formData.countryCode}${formData.phone}`, 
-        },
-        theme: {
-          color: "#3399cc",
-        },
-      };
-
-      const paymentObject = new (window).Razorpay(options);
-      paymentObject.on("payment.failed", (err) => {
-        reject(err);
-      });
-      paymentObject.open();
-    });
   };
 
   const handleSubmit = async (e) => {
@@ -149,7 +286,6 @@ const Checkout = () => {
 
     // Step navigation logic
     if (currentStep === 1) {
-      // --- FIX: Add comprehensive validation for ALL required fields ---
       if (
         !formData.firstName ||
         !formData.lastName ||
@@ -179,14 +315,13 @@ const Checkout = () => {
     // Step 3: Place order
     setIsProcessing(true);
 
-    // Get userId from localStorage (or however your auth works)
+    // Get userId from localStorage
     const storedUser = localStorage.getItem("user");
     let userId = null;
     if (storedUser) {
       try {
         const userObj = JSON.parse(storedUser);
-        // Assuming user data is stored as { user: { _id: '...' } } or just { _id: '...' }
-        userId = userObj?.user?._id || userObj?._id || null; 
+        userId = userObj?.user?._id || userObj?._id || null;
       } catch (err) {
         console.error("Error parsing stored user:", err);
       }
@@ -202,7 +337,6 @@ const Checkout = () => {
       return;
     }
 
-    // --- FIX: Ensure a combined phone number is used for contact fields ---
     const fullPhoneNumber = `${formData.countryCode}${formData.phone}`;
 
     // Prepare base order payload
@@ -214,13 +348,12 @@ const Checkout = () => {
         .replace(/-/g, "")}-${Math.floor(Math.random() * 1000)}`,
       currency: "INR",
       items: state.items.map((item) => ({
-        // Ensure item data is correct and matches backend schema
         productId: item.id,
         quantity: item.quantity,
         unitPrice: item.price,
         totalPrice: parseFloat((item.price * item.quantity).toFixed(2)),
         productName: item.name,
-        productSku: item.sku || "N/A",
+        productSku: "N/A",
       })),
       billingAddress: {
         type: "billing",
@@ -232,32 +365,28 @@ const Checkout = () => {
         state: formData.state,
         postalCode: formData.postalCode,
         country: formData.country,
-        // Using the full number
-        phone: fullPhoneNumber, 
+        phone: fullPhoneNumber,
       },
       shippingAddress: {
         type: "shipping",
         name: `${formData.firstName} ${formData.lastName}`,
         addressLine1: formData.addressLine1,
-        addressLine2: formData.addressLine2, // Include this for completeness
+        addressLine2: formData.addressLine2,
         city: formData.city,
         state: formData.state,
         postalCode: formData.postalCode,
         country: formData.country,
-        // Added phone here as backends often require it in both
-        phone: fullPhoneNumber, 
+        phone: fullPhoneNumber,
       },
       subtotal: parseFloat(subtotal.toFixed(2)),
       taxAmount: parseFloat(taxAmount.toFixed(2)),
       shippingAmount: shippingAmount,
       discountAmount: parseFloat(discountAmount.toFixed(2)),
       totalAmount: parseFloat(totalAmount.toFixed(2)),
-      // Backend might expect status fields on initial creation
-      orderStatus: "Pending", // Default status
-      paymentStatus: "Pending", // Default status
+      orderStatus: "pending",
+      paymentStatus: "pending",
     };
-    
-    // --- Log payload for debugging ---
+
     console.log("Order Payload being sent:", baseOrderData);
 
     if (formData.shippingMethod === "Cash on Delivery") {
@@ -266,7 +395,7 @@ const Checkout = () => {
         const orderData = {
           ...baseOrderData,
           paymentMethod: "cod",
-          paymentStatus: "Pending", // COD is usually 'Pending' or 'Unpaid'
+          paymentStatus: "pending",
         };
 
         const order = await createOrder(orderData);
@@ -291,43 +420,63 @@ const Checkout = () => {
     } else {
       // Online / Razorpay flow
       try {
-        const paymentResponse = await displayRazorpay();
-        if (!paymentResponse) {
-          setIsProcessing(false);
-          return;
-        }
-
+        // Step 1: Create order in your database with pending payment status
         const orderData = {
           ...baseOrderData,
-          paymentMethod: "credit_card",
-          paymentStatus: "Paid", // Payment is successful at this point
-          orderStatus: "Processing", // Or whatever your initial paid status is
-          paymentInfo: {
-            id: paymentResponse.razorpay_payment_id,
-            order_id: paymentResponse.razorpay_order_id,
-            signature: paymentResponse.razorpay_signature,
-            // Include currency and amount for backend verification
-            currency: baseOrderData.currency,
-            amount: amountInPaise / 100, // Send amount in Rupee
-          },
+          paymentMethod: "upi",
+          paymentStatus: "pending",
+          orderStatus: "pending",
         };
 
         const order = await createOrder(orderData);
+        console.log("Order created:", order);
+        
+        if (!order || !order._id) {
+          throw new Error("Failed to create order in database");
+        }
 
+        const orderId = order._id;
+
+        // Step 2: Create Razorpay order
+        const orderResult = await createPaymentOrder(orderId);
+        console.log("Payment order created:", orderResult);
+
+        if (!orderResult || !orderResult.orderId) {
+          throw new Error("Failed to create Razorpay order");
+        }
+
+        // Step 3: Open Razorpay payment modal and wait for payment
+        await displayRazorpay(orderResult);
+
+        // Step 4: Payment successful and verified in displayRazorpay handler
         toast({
           title: "Order placed successfully! 🎉",
-          description: `Payment ID: ${paymentResponse.razorpay_payment_id}, Order ID: ${order._id}`,
+          description: "Your payment has been processed.",
         });
 
         clearCart();
         navigate(`/order/${userId}`);
       } catch (err) {
         console.error("Payment / Order error:", err);
-        // Display user-friendly error from backend or generic message
+
+        // Handle different error types
+        let errorMessage = "Something went wrong. Please try again.";
+
+        if (err.message === "Payment cancelled by user") {
+          errorMessage = "Payment was cancelled. Your order has not been placed.";
+        } else if (err.message?.includes("create order")) {
+          errorMessage = "Failed to create order. Please try again.";
+        } else if (err.message?.includes("Razorpay")) {
+          errorMessage = "Payment gateway error. Please try again.";
+        } else if (err.error?.description) {
+          errorMessage = err.error.description;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+
         toast({
           title: "Payment / Order Failed",
-          description:
-            err.error?.description || err.message || "Something went wrong.",
+          description: errorMessage,
           variant: "destructive",
         });
       } finally {
@@ -335,8 +484,6 @@ const Checkout = () => {
       }
     }
   };
-
-  // ... (rest of the component JSX remains the same, except for the input labels)
 
   if (state.items.length === 0) {
     return (
@@ -384,9 +531,9 @@ const Checkout = () => {
           </p>
         </div>
 
-        {/* Step Indicator - IMPROVED RESPONSIVENESS for small screens */}
+        {/* Step Indicator */}
         <div className="flex justify-center mb-12">
-          <div className="flex items-center space-x-3 sm:space-x-8"> 
+          <div className="flex items-center space-x-3 sm:space-x-8">
             {steps.map((step, idx) => (
               <motion.div
                 key={step.id}
@@ -409,18 +556,17 @@ const Checkout = () => {
                   )}
                 </div>
                 <span
-                  className={`font-medium text-sm sm:text-base ${ // Small text on mobile
+                  className={`font-medium text-sm sm:text-base ${
                     currentStep >= step.id
                       ? "text-primary"
                       : "text-muted-foreground"
-                  } hidden sm:inline`} // Hide text on very small mobile screens for space
+                  } hidden sm:inline`}
                 >
                   {step.name}
                 </span>
                 {idx < steps.length - 1 && (
                   <div
-                    // Reduced width and margin on small screens
-                    className={`w-6 sm:w-12 h-0.5 mx-2 sm:mx-4 ${ 
+                    className={`w-6 sm:w-12 h-0.5 mx-2 sm:mx-4 ${
                       currentStep > step.id ? "bg-primary" : "bg-muted"
                     }`}
                   />
@@ -429,9 +575,8 @@ const Checkout = () => {
             ))}
           </div>
         </div>
-        {/* End Step Indicator */}
 
-        {/* Main Content Grid - Mobile first (single column), then 2/3 and 1/3 on laptop */}
+        {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <motion.form
@@ -441,7 +586,7 @@ const Checkout = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Step 1: Shipping + address + optional fields */}
+              {/* Step 1: Shipping */}
               {currentStep === 1 && (
                 <motion.div
                   className="bg-card rounded-3xl p-8 shadow-md"
@@ -456,7 +601,6 @@ const Checkout = () => {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* First Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         First Name <span className="text-red-500">*</span>
@@ -471,7 +615,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* Last Name */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Last Name <span className="text-red-500">*</span>
@@ -486,7 +629,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* Email */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Email Address <span className="text-red-500">*</span>
@@ -501,7 +643,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* Phone Number with Country Code - IMPROVED RESPONSIVENESS for input group */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Phone Number <span className="text-red-500">*</span>
@@ -511,7 +652,6 @@ const Checkout = () => {
                           name="countryCode"
                           value={formData.countryCode}
                           onChange={handleInputChange}
-                          // Added w-auto to prevent it from taking too much space on mobile
                           className="px-3 py-3 bg-gray-100 text-gray-700 border-r outline-none w-auto"
                         >
                           <option value="+91">🇮🇳 +91</option>
@@ -530,7 +670,6 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    {/* Company (Optional) */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Company (optional)
@@ -544,7 +683,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* Address Line 1 */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Street Address <span className="text-red-500">*</span>
@@ -559,7 +697,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* Address Line 2 */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Address Line 2 (optional)
@@ -573,7 +710,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* City */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         City <span className="text-red-500">*</span>
@@ -588,7 +724,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* State */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         State <span className="text-red-500">*</span>
@@ -603,7 +738,6 @@ const Checkout = () => {
                       />
                     </div>
 
-                    {/* ZIP Code */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         ZIP Code <span className="text-red-500">*</span>
@@ -621,7 +755,7 @@ const Checkout = () => {
                 </motion.div>
               )}
 
-              {/* Step 2: Payment & shipping method */}
+              {/* Step 2: Payment */}
               {currentStep === 2 && (
                 <motion.div
                   className="bg-card rounded-3xl p-8 space-y-8"
@@ -788,15 +922,14 @@ const Checkout = () => {
             </motion.form>
           </div>
 
-          {/* Order Summary - IMPROVED RESPONSIVENESS for sticky position */}
+          {/* Order Summary */}
           <motion.div
             className="lg:col-span-1"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            {/* Added lg:sticky to prevent sticky behavior on mobile */}
-            <div className="bg-card rounded-3xl p-8 lg:sticky lg:top-8"> 
+            <div className="bg-card rounded-3xl p-8 lg:sticky lg:top-8">
               <h3 className="text-2xl font-bold mb-6">Order Summary</h3>
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-muted-foreground">
@@ -841,7 +974,6 @@ const Checkout = () => {
               </div>
             </div>
           </motion.div>
-          {/* End Order Summary */}
         </div>
       </main>
     </div>
