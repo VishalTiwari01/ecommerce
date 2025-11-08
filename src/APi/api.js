@@ -140,10 +140,4 @@ export const getUserOrders = async (userId) => {
 };
 
 
-export const Razorpay = () =>{
-  try {
-    
-  } catch (error) {
-    
-  }
-}
+

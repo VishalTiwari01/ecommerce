@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { toast } from "../hooks/use-toast";
-import { createOrder } from "../APi/api.js"; // Assuming this path is correct
+import { createOrder } from "../APi/api.js"; 
 
 // Dynamically load Razorpay script
 const loadRazorpayScript = (src) => {
