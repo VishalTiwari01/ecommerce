@@ -68,28 +68,6 @@ export const getProductsId = async (id) => {
  * Fetches all orders belonging to the currently authenticated user.
  * @returns {Promise<Array<object>>} An array of user order objects.
  */
-// export const getUserOrders = async () => {
-//   try {
-//     const token = localStorage.getItem("token");
-
-//     // Ensure the user is logged in
-//     if (!token) {
-//         throw new Error("Authentication token not found. Please log in.");
-//     }
-
-//     const response = await axios.get(`${BASE_URL}/orders`, {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-
-//     return response.data; 
-//   } catch (error) {
-//     const errorMsg =
-//       error.response?.data?.message || "Failed to fetch user orders.";
-//     throw new Error(errorMsg);
-//   }
-// };
 /**
  * Creates a new order for the authenticated user.
  * @param {object} orderData The data required to create the order (e.g., items, shipping address, total).
@@ -120,7 +98,7 @@ export const createOrder = async (orderData) => {
 };
 
 
-// const BASE_URL = 'https://monkfish-app-phfed.ondigitalocean.app/api';
+
 
 export const getUserOrders = async (userId) => {
   try {
@@ -129,7 +107,7 @@ export const getUserOrders = async (userId) => {
 
     if (!response.ok) {
       // If the status code is not 2xx, throw the error from server response
-      throw new Error(data.message || 'Failed to fetch orders');
+      throw new Error(data.message || 'Failed to fetch order');
     }
 
     return data;
