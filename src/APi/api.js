@@ -2,7 +2,8 @@ import axios from "axios";
 import { signIn } from "../redux/slices/authSlice";
 
 // Base URL for the API endpoints
-export const BASE_URL = 'https://monkfish-app-phfed.ondigitalocean.app/api';
+// export const BASE_URL = 'https://monkfish-app-phfed.ondigitalocean.app/api';
+export const BASE_URL = 'http://localhost:1209/api';
 
 /**
  * Handles user login using a phone number.
@@ -40,7 +41,7 @@ export const loginUser = async (mobile, dispatch) => {
 export const getAllProducts = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/products`);
-    return response.data; 
+    return response.data;
   } catch (error) {
     const errorMsg =
       error.response?.data?.message || "Failed to fetch products. Please try again.";
@@ -56,7 +57,7 @@ export const getAllProducts = async () => {
 export const getProductsId = async (id) => {
   try {
     const response = await axios.get(`${BASE_URL}/products/${id}`);
-    return response.data; 
+    return response.data;
   } catch (error) {
     const errorMsg =
       error.response?.data?.message || "Failed to fetch product details.";
@@ -79,7 +80,7 @@ export const createOrder = async (orderData) => {
 
     // Safety check: ensure token exists before making an authenticated request
     if (!token) {
-        throw new Error("Authentication token not found. Please log in to place an order.");
+      throw new Error("Authentication token not found. Please log in to place an order.");
     }
 
     // FIX: POST request should be to the collection endpoint /orders, not /orders/:id
@@ -117,4 +118,33 @@ export const getUserOrders = async (userId) => {
   }
 };
 
+<<<<<<< HEAD
 
+=======
+export const createPaymentOrder = async (orderId) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/orders/${orderId}/checkout`,);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error creating payment order:', error);
+    throw error;
+  }
+};
+// Verify payment
+export const verifyPayment = async (orderId, paymentId, signature) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/orders/payment/verify`, { orderId, paymentId, signature });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error verifying payment:', error);
+    throw error;
+  }
+};
+export const Razorpay = () => {
+  try {
+
+  } catch (error) {
+
+  }
+}
+>>>>>>> a46b4ab371898fedd3bb5341b057dde24d61c421
