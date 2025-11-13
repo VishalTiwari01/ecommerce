@@ -553,10 +553,10 @@ const ProductDetail = () => {
               )}
 
               <div className="flex items-center space-x-4">
-                <span className="text-3xl font-bold text-primary">₹{product.salePrice}</span>
+                <span className="text-3xl font-bold text-primary">₹{product.price}</span>
                 {product.price && (
                   <>
-                    <span className="text-xl text-muted-foreground line-through">₹{product.price}</span>
+                    <span className="text-xl text-muted-foreground line-through">₹{product.salePrice}</span>
                     <span className="bg-success text-success-foreground px-2 py-1 rounded-full text-sm font-semibold">
                       Save ₹{(product.price - product.salePrice).toFixed(2)}
                     </span>
@@ -672,10 +672,10 @@ const ProductDetail = () => {
                 <Truck size={16} className="text-primary" />
                 <span>Free Shipping</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              {/* <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <RotateCcw size={16} className="text-secondary" />
                 <span>30-Day Returns</span>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         </div>
