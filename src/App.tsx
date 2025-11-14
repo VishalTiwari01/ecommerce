@@ -18,6 +18,11 @@ import Order from "./components/Order";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import CategoryPage from "./pages/CategoryPage";
+import ShippingReturnPolicy from "./components/ShippingReturnPolicy";
+import TermsOfUse from "./components/TermsOfUse";
+import PrivacyPolicy from "./components/PrivacyPolicy";
+import Disclaimer from "./components/Disclaimer";
+import ShippingPolicy from "./components/ShippingPolicy";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +44,11 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
                <Route path="/order/:userId" element={<Order />} />
               <Route path="*" element={<NotFound />} />
+              <Route path="/return-policy" element={<ShippingReturnPolicy />} />
+              <Route path="/terms&use" element={<TermsOfUse />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="/shipping-policy" element={<ShippingPolicy />} />
             </Routes>
             <Footer />
           </BrowserRouter>

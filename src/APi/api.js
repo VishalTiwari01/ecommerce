@@ -2,8 +2,8 @@ import axios from "axios";
 import { signIn } from "../redux/slices/authSlice";
 
 // Base URL for the API endpoints
-// export const BASE_URL = 'https://monkfish-app-phfed.ondigitalocean.app/api';
-export const BASE_URL = 'http://localhost:1209/api';
+export const BASE_URL = 'https://monkfish-app-phfed.ondigitalocean.app/api';
+// export const BASE_URL = 'http://localhost:1209/api';
 
 /**
  * Handles user login using a phone number.
@@ -57,7 +57,8 @@ export const getAllProducts = async () => {
 export const getProductsId = async (id) => {
   try {
     const response = await axios.get(`${BASE_URL}/products/${id}`);
-    return response.data;
+    // If API wraps result in { product: {...} } return product, otherwise return the whole data
+    return response.data?.product ?? response.data;
   } catch (error) {
     const errorMsg =
       error.response?.data?.message || "Failed to fetch product details.";
@@ -118,9 +119,9 @@ export const getUserOrders = async (userId) => {
   }
 };
 
-<<<<<<< HEAD
 
-=======
+
+
 export const createPaymentOrder = async (orderId) => {
   try {
     const response = await axios.post(`${BASE_URL}/orders/${orderId}/checkout`,);
@@ -147,4 +148,4 @@ export const Razorpay = () => {
 
   }
 }
->>>>>>> a46b4ab371898fedd3bb5341b057dde24d61c421
+

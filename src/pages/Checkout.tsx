@@ -13,22 +13,32 @@ import {
 } from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { toast } from "../hooks/use-toast";
-<<<<<<< HEAD
+
 import { createOrder } from "../APi/api.js"; 
-=======
+
 import {
-  createOrder,
   getRazorpayKey,
   verifyPayment
 } from "../APi/api.js";
->>>>>>> a46b4ab371898fedd3bb5341b057dde24d61c421
 
-// TypeScript declaration for Razorpay
+// TypeScript declaration for Razorpay (kept for compatibility)
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
+
+// Small fallback map: color name -> hex (used if cart item doesn't already include a hex)
+const COLOR_MAP = {
+  blue: "#3b82f6",
+  red: "#ef4444",
+  green: "#10b981",
+  yellow: "#facc15",
+  black: "#000000",
+  white: "#ffffff",
+  pink: "#ec4899",
+  purple: "#a855f7",
+};
 
 const Checkout = () => {
   const { state, clearCart } = useCart();
@@ -75,7 +85,7 @@ const Checkout = () => {
 
   const subtotal = state.total;
   const shippingAmount = 0;
-  const taxRate = 0.08;
+  const taxRate = 0.18;
   const discountAmount = 0.0;
   const taxAmount = subtotal * taxRate;
   const totalAmount = subtotal + shippingAmount + taxAmount;
@@ -84,60 +94,40 @@ const Checkout = () => {
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
       if (typeof window.Razorpay !== 'undefined') {
-        console.log("Razorpay already loaded");
         resolve(true);
         return;
       }
-      
-      // Check if script already exists
+
       const existingScript = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
       if (existingScript) {
-        console.log("Razorpay script tag exists, waiting for load");
-        // Wait a bit for it to load
         setTimeout(() => {
-          if (typeof window.Razorpay !== 'undefined') {
-            console.log("Razorpay loaded from existing script");
-            resolve(true);
-          } else {
-            resolve(false);
-          }
+          if (typeof window.Razorpay !== 'undefined') resolve(true);
+          else resolve(false);
         }, 500);
         return;
       }
-      
-      console.log("Loading Razorpay script...");
+
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
       script.crossOrigin = 'anonymous';
-      
+
       script.onload = () => {
-        console.log("Razorpay script loaded successfully");
-        // Give it a moment to initialize
         setTimeout(() => {
-          if (typeof window.Razorpay !== 'undefined') {
-            resolve(true);
-          } else {
-            console.error("Razorpay script loaded but Razorpay object not found");
-            resolve(false);
-          }
+          if (typeof window.Razorpay !== 'undefined') resolve(true);
+          else resolve(false);
         }, 100);
       };
-      
-      script.onerror = (error) => {
-        console.error("Failed to load Razorpay script:", error);
-        resolve(false);
-      };
-      
+
+      script.onerror = () => resolve(false);
+
       document.head.appendChild(script);
     });
   };
 
   const createPaymentOrder = async (orderId) => {
     try {
-      console.log("Creating payment order for order ID:", orderId);
       const response = await axios.post(`http://localhost:1209/api/orders/${orderId}/checkout`);
-      console.log("Payment order created:", response.data);
       return response.data;
     } catch (error) {
       console.error('Error creating payment order:', error);
@@ -145,13 +135,10 @@ const Checkout = () => {
     }
   };
 
-  // Razorpay integration
+  // Razorpay integration (kept as in your file)
   const displayRazorpay = async (orderData) => {
     try {
-      // Load Razorpay script
       const isScriptLoaded = await loadRazorpayScript();
-      console.log("Razorpay script loaded:", isScriptLoaded);
-      
       if (!isScriptLoaded) {
         toast({
           title: "Payment Gateway Error",
@@ -161,9 +148,7 @@ const Checkout = () => {
         throw new Error("Failed to load Razorpay script");
       }
 
-      // Verify Razorpay is available
       if (typeof window.Razorpay === 'undefined') {
-        console.error("Razorpay object not found on window");
         toast({
           title: "Payment Gateway Error",
           description: "Payment gateway not initialized. Please refresh and try again.",
@@ -174,12 +159,7 @@ const Checkout = () => {
 
       const razorpayKey = "rzp_test_RBaYPZbM1oDXUD"; // Replace with your actual key
 
-      console.log("Payment Order Data:", JSON.stringify(orderData, null, 2));
-      console.log("Razorpay Key:", razorpayKey);
-
-      // Validate order data
       if (!orderData.orderId || !orderData.amount) {
-        console.error("Invalid order data:", orderData);
         toast({
           title: "Order Error",
           description: "Invalid payment order data. Please try again.",
@@ -189,7 +169,6 @@ const Checkout = () => {
       }
 
       return new Promise((resolve, reject) => {
-        // Create options object without directly assigning to avoid XrayWrapper issues
         const razorpayOptions = {
           key: razorpayKey,
           amount: orderData.amount,
@@ -206,17 +185,12 @@ const Checkout = () => {
             color: '#8B5CF6',
           },
           handler: function(response) {
-            console.log('Payment success response:', response);
-            
-            // Verify payment on backend
             verifyPayment(
               response.razorpay_order_id,
               response.razorpay_payment_id,
               response.razorpay_signature
             )
             .then((result) => {
-              console.log('Payment verification result:', result);
-              
               if (result && result.verified) {
                 resolve(response);
               } else {
@@ -224,7 +198,6 @@ const Checkout = () => {
               }
             })
             .catch((error) => {
-              console.error('Payment verification failed:', error);
               toast({
                 title: "Payment Verification Failed",
                 description: "Please contact support with your payment details.",
@@ -235,7 +208,6 @@ const Checkout = () => {
           },
           modal: {
             ondismiss: function() {
-              console.log("Payment modal dismissed by user");
               toast({
                 title: "Payment Cancelled",
                 description: "You cancelled the payment. Please try again to complete your order.",
@@ -246,18 +218,11 @@ const Checkout = () => {
           }
         };
 
-        console.log("Creating Razorpay instance with options");
-
         try {
-          // Create Razorpay instance
           const RazorpayConstructor = window.Razorpay;
           const razorpayInstance = new RazorpayConstructor(razorpayOptions);
-          
-          console.log("Razorpay instance created");
 
-          // Handle payment failure
           razorpayInstance.on('payment.failed', function(response) {
-            console.error('Payment Failed:', response.error);
             toast({
               title: "Payment Failed",
               description: response.error.description || "Payment failed. Please try again.",
@@ -266,11 +231,8 @@ const Checkout = () => {
             reject(response.error);
           });
 
-          console.log("Opening Razorpay modal...");
           razorpayInstance.open();
-          console.log("Razorpay modal opened");
         } catch (error) {
-          console.error("Error creating/opening Razorpay:", error);
           toast({
             title: "Payment Gateway Error",
             description: "Failed to open payment gateway. Please try again.",
@@ -280,7 +242,6 @@ const Checkout = () => {
         }
       });
     } catch (error) {
-      console.error("Error in displayRazorpay:", error);
       throw error;
     }
   };
@@ -351,14 +312,29 @@ const Checkout = () => {
         .slice(0, 10)
         .replace(/-/g, "")}-${Math.floor(Math.random() * 1000)}`,
       currency: "INR",
-      items: state.items.map((item) => ({
-        productId: item.id,
-        quantity: item.quantity,
-        unitPrice: item.price,
-        totalPrice: parseFloat((item.price * item.quantity).toFixed(2)),
-        productName: item.name,
-        productSku: "N/A",
-      })),
+      // Map items and include color info (selectedColor, selectedColorHex if available, variantId)
+      items: state.items.map((item) => {
+        // item.selectedColor may be a name (like "blue") or a hex already.
+        // item.selectedColorHex or item.colorHex can be used if present.
+        const selectedColorName = item.selectedColor ?? null;
+        const selectedColorHex =
+          item.selectedColorHex ??
+          item.colorHex ??
+          (selectedColorName ? (COLOR_MAP[selectedColorName?.toLowerCase()] || selectedColorName) : null);
+
+        return {
+          productId: item.id,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          totalPrice: parseFloat((item.price * item.quantity).toFixed(2)),
+          productName: item.name,
+          productSku: item.sku ?? "N/A",
+          selectedColor: selectedColorName,
+          selectedColorHex: selectedColorHex,
+          variantId: item.variantId ?? null,
+          image: item.image ?? null,
+        };
+      }),
       billingAddress: {
         type: "billing",
         name: `${formData.firstName} ${formData.lastName}`,
@@ -391,11 +367,9 @@ const Checkout = () => {
       paymentStatus: "pending",
     };
 
-    console.log("Order Payload being sent:", baseOrderData);
-
-    if (formData.shippingMethod === "Cash on Delivery") {
-      // COD flow
-      try {
+    try {
+      if (formData.shippingMethod === "Cash on Delivery") {
+        // COD flow
         const orderData = {
           ...baseOrderData,
           paymentMethod: "cod",
@@ -411,20 +385,8 @@ const Checkout = () => {
 
         clearCart();
         navigate(`/order/${userId}`);
-      } catch (err) {
-        console.error("COD Order Failed:", err);
-        toast({
-          title: "Order Failed",
-          description: err.message || "Something went wrong.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsProcessing(false);
-      }
-    } else {
-      // Online / Razorpay flow
-      try {
-        // Step 1: Create order in your database with pending payment status
+      } else {
+        // Online / Razorpay flow
         const orderData = {
           ...baseOrderData,
           paymentMethod: "upi",
@@ -433,26 +395,14 @@ const Checkout = () => {
         };
 
         const order = await createOrder(orderData);
-        console.log("Order created:", order);
-        
-        if (!order || !order._id) {
-          throw new Error("Failed to create order in database");
-        }
+        if (!order || !order._id) throw new Error("Failed to create order in database");
 
         const orderId = order._id;
-
-        // Step 2: Create Razorpay order
         const orderResult = await createPaymentOrder(orderId);
-        console.log("Payment order created:", orderResult);
+        if (!orderResult || !orderResult.orderId) throw new Error("Failed to create Razorpay order");
 
-        if (!orderResult || !orderResult.orderId) {
-          throw new Error("Failed to create Razorpay order");
-        }
-
-        // Step 3: Open Razorpay payment modal and wait for payment
         await displayRazorpay(orderResult);
 
-        // Step 4: Payment successful and verified in displayRazorpay handler
         toast({
           title: "Order placed successfully! 🎉",
           description: "Your payment has been processed.",
@@ -460,32 +410,29 @@ const Checkout = () => {
 
         clearCart();
         navigate(`/order/${userId}`);
-      } catch (err) {
-        console.error("Payment / Order error:", err);
-
-        // Handle different error types
-        let errorMessage = "Something went wrong. Please try again.";
-
-        if (err.message === "Payment cancelled by user") {
-          errorMessage = "Payment was cancelled. Your order has not been placed.";
-        } else if (err.message?.includes("create order")) {
-          errorMessage = "Failed to create order. Please try again.";
-        } else if (err.message?.includes("Razorpay")) {
-          errorMessage = "Payment gateway error. Please try again.";
-        } else if (err.error?.description) {
-          errorMessage = err.error.description;
-        } else if (err.message) {
-          errorMessage = err.message;
-        }
-
-        toast({
-          title: "Payment / Order Failed",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      } finally {
-        setIsProcessing(false);
       }
+    } catch (err) {
+      console.error("Payment / Order error:", err);
+      let errorMessage = "Something went wrong. Please try again.";
+      if (err.message === "Payment cancelled by user") {
+        errorMessage = "Payment was cancelled. Your order has not been placed.";
+      } else if (err.message?.includes("create order")) {
+        errorMessage = "Failed to create order. Please try again.";
+      } else if (err.message?.includes("Razorpay")) {
+        errorMessage = "Payment gateway error. Please try again.";
+      } else if (err.error?.description) {
+        errorMessage = err.error.description;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      toast({
+        title: "Payment / Order Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -508,6 +455,17 @@ const Checkout = () => {
       </div>
     );
   }
+
+  // Helper to get swatch color for display
+  const swatchColor = (item) => {
+    if (item.selectedColorHex) return item.selectedColorHex;
+    if (item.colorHex) return item.colorHex;
+    if (item.selectedColor && COLOR_MAP[item.selectedColor?.toLowerCase()]) {
+      return COLOR_MAP[item.selectedColor?.toLowerCase()];
+    }
+    // last fallback: try to use selectedColor directly (maybe it's a hex already)
+    return item.selectedColor ?? "#e5e7eb";
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -603,7 +561,7 @@ const Checkout = () => {
                       Shipping Information
                     </h2>
                   </div>
-
+                  {/* shipping form fields (same as before) */}
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -618,7 +576,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Last Name <span className="text-red-500">*</span>
@@ -632,7 +589,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Email Address <span className="text-red-500">*</span>
@@ -646,7 +602,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Phone Number <span className="text-red-500">*</span>
@@ -673,7 +628,6 @@ const Checkout = () => {
                         />
                       </div>
                     </div>
-
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Company (optional)
@@ -686,7 +640,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Street Address <span className="text-red-500">*</span>
@@ -700,7 +653,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Address Line 2 (optional)
@@ -713,7 +665,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         City <span className="text-red-500">*</span>
@@ -727,7 +678,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         State <span className="text-red-500">*</span>
@@ -741,7 +691,6 @@ const Checkout = () => {
                         className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary"
                       />
                     </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         ZIP Code <span className="text-red-500">*</span>
@@ -837,11 +786,31 @@ const Checkout = () => {
                             className="flex items-center justify-between p-4 bg-muted/30 rounded-xl"
                           >
                             <div className="flex items-center space-x-4">
-                              <div className="text-3xl">{item.emoji}</div>
+                              <div className="w-12 h-12 rounded-md overflow-hidden flex items-center justify-center bg-white">
+                                {item.image ? (
+                                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <div className="text-3xl">{item.emoji ?? "🧸"}</div>
+                                )}
+                              </div>
+
                               <div>
                                 <div className="font-medium">{item.name}</div>
-                                <div className="text-sm">
-                                  Qty: {item.quantity}
+                                <div className="text-sm flex items-center space-x-3 mt-1">
+                                  <div>Qty: {item.quantity}</div>
+
+                                  {/* Color display */}
+                                  {item.selectedColor && (
+                                    <div className="flex items-center space-x-2">
+                                      <div
+                                        className="w-4 h-4 rounded-full border"
+                                        style={{ backgroundColor: swatchColor(item) }}
+                                      />
+                                      <div className="text-xs text-muted-foreground">
+                                        {item.selectedColor}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>

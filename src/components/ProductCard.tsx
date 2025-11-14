@@ -35,9 +35,9 @@ const ProductCard = ({ product, index }) => {
       id: product._id,
       name: product.name,
       price: product.price,
-      emoji: product.emoji,
-      selectedColor: product.colors?.[selectedColor],
-      category: product.category,
+      salePrice: product.salePrice,
+      image: product.imageUrl[0].imageUrl,
+      category: product.categoryId,
     });
 
     toast({

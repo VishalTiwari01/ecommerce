@@ -1,11 +1,8 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
-<<<<<<< HEAD
-import { getAllProducts } from '../APi/api';
-=======
 import { getAllProducts } from '../APi/api.js';
->>>>>>> a46b4ab371898fedd3bb5341b057dde24d61c421
+
 import { toast } from '../hooks/use-toast';
 
 const ProductShowcase = () => {

@@ -64,6 +64,20 @@ const Order = () => {
     );
   }
 
+  // helper to pick image for item
+  const getItemImage = (item) => {
+    // Prefer explicit image field saved on order item
+    if (item.image && typeof item.image === 'string' && item.image.trim().length > 0) {
+      return item.image;
+    }
+    // fallback common fields
+    if (item.imageUrl && typeof item.imageUrl === 'string' && item.imageUrl.trim().length > 0) {
+      return item.imageUrl;
+    }
+    // placeholder
+    return 'https://via.placeholder.com/150?text=No+Image';
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl sm:text-3xl font-semibold mb-6 text-gray-800">Your Orders</h1>
@@ -80,9 +94,9 @@ const Order = () => {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h2 className="text-lg font-medium text-gray-800">Order #{order?.orderNumber}</h2>
-                <p className="text-sm text-gray-500">Status: {order?.status}</p>
+                <p className="text-sm text-gray-500">Status: {order?.status ?? order?.orderStatus ?? '—'}</p>
               </div>
-              {getStatusIcon(order?.status)}
+              {getStatusIcon(order?.status ?? order?.orderStatus)}
             </div>
 
             <div className="border-t pt-4 space-y-4">
@@ -91,17 +105,30 @@ const Order = () => {
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <img
-                        src="https://via.placeholder.com/60"
-                        alt={item.productName}
+                        src={getItemImage(item)}
+                        alt={item.productName || 'product'}
                         className="w-14 h-14 object-cover rounded border"
                       />
                       <div>
                         <p className="text-sm font-medium text-gray-700">{item.productName}</p>
                         <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+
+                        {/* optional: show selected color if present */}
+                        {(item.selectedColor || item.selectedColorHex) && (
+                          <div className="mt-1 flex items-center gap-2">
+                            <div
+                              className="w-4 h-4 rounded-full border"
+                              style={{ backgroundColor: item.selectedColorHex ?? item.selectedColor }}
+                            />
+                            <span className="text-xs text-gray-500">
+                              {item.selectedColor ?? item.selectedColorHex}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="text-sm font-semibold text-gray-800">
-                      ₹{item.totalPrice?.toFixed(2) || '0.00'}
+                      ₹{order.subtotal?.toFixed(2) || '0.00'}
                     </div>
                   </div>
                 ))
@@ -121,10 +148,10 @@ const Order = () => {
                   <span>Tax:</span>
                   <span>₹{order.taxAmount?.toFixed(2) || '0.00'}</span>
                 </p>
-                <p className="flex justify-between">
+                {/* <p className="flex justify-between">
                   <span>Shipping:</span>
                   <span>₹{order.shippingAmount?.toFixed(2) || '0.00'}</span>
-                </p>
+                </p> */}
                 {order.discountAmount > 0 && (
                   <p className="flex justify-between text-green-600">
                     <span>Discount:</span>
@@ -140,7 +167,21 @@ const Order = () => {
                 </p>
               </div>
 
-             
+              {/* optional: shipping address / meta */}
+              <div>
+                <h4 className="font-semibold mb-2">Shipping</h4>
+                <div className="text-sm text-gray-600">
+                  <p>{order.shippingAddress?.name ?? '—'}</p>
+                  <p>
+                    {order.shippingAddress?.addressLine1 ?? ''} {order.shippingAddress?.addressLine2 ?? ''}
+                  </p>
+                  <p>
+                    {order.shippingAddress?.city ?? ''}, {order.shippingAddress?.state ?? ''}{' '}
+                    {order.shippingAddress?.postalCode ?? ''}
+                  </p>
+                  <p>{order.shippingAddress?.phone ?? ''}</p>
+                </div>
+              </div>
             </div>
           </motion.div>
         ))}
