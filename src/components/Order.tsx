@@ -1,8 +1,17 @@
+// Order.jsx
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Package, Truck, CheckCircle, CreditCard } from 'lucide-react';
 import { getUserOrders } from '../APi/api.js';
+
+// Inline SVG placeholder (no external network call)
+const INLINE_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(
+  `<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'>
+     <rect width='100%' height='100%' fill='#f3f4f6'/>
+     <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#9ca3af' font-family='Arial' font-size='18'>No Image</text>
+   </svg>`
+)}`;
 
 const Order = () => {
   const { userId } = useParams();
@@ -14,75 +23,66 @@ const Order = () => {
     const fetchOrders = async () => {
       try {
         const data = await getUserOrders(userId);
-        // DEBUG: always log raw response so you can inspect shape
         console.debug('[getUserOrders] raw response:', data);
 
-        // Normalize: data might already be an array, or a single order, or an object with "orders" prop.
         let normalized = [];
 
-        if (Array.isArray(data)) {
-          normalized = data;
-        } else if (data && typeof data === 'object') {
-          // if API returned an object with orders property
-          if (Array.isArray(data.orders)) {
-            normalized = data.orders;
-          } else if (data._id || data.orderId || data.orderNumber) {
-            // single order object
-            normalized = [data];
-          } else {
-            // unknown shape: try to find array values inside object
+        if (Array.isArray(data)) normalized = data;
+        else if (data && typeof data === 'object') {
+          if (Array.isArray(data.orders)) normalized = data.orders;
+          else if (data._id || data.orderId || data.orderNumber) normalized = [data];
+          else {
             const maybeArray = Object.values(data).find(v => Array.isArray(v));
             if (Array.isArray(maybeArray)) normalized = maybeArray;
           }
         }
 
-        // If nothing found -> empty
         if (!Array.isArray(normalized) || normalized.length === 0) {
           setError('No orders found.');
           setOrders([]);
           return;
         }
 
-        // Normalize each order: ensure order.items exists as array
         const mapped = normalized.map((order) => {
-          // If items array exists, use it
+          // If items exist, normalize variantImage for each item
           if (Array.isArray(order.items) && order.items.length > 0) {
-            return order;
+            const normalizedItems = order.items.map(it => {
+              const variantObj = it.variantId || it.variant || {};
+              const variantImage = extractImageFromVariantObject(variantObj);
+              return { ...it, variantImage };
+            });
+            return { ...order, items: normalizedItems };
           }
 
-          // Otherwise try to build items array from productId + variantId fields (based on your sample)
+          // Fallback: build items using productId + variantId pattern
           const fallbackItems = [];
           if (order.productId) {
             const prod = order.productId;
             const variant = order.variantId || order.variant || {};
-            // quantity might be at root or inside
-            const qty = order.quantity ?? (order.items?.[0]?.quantity) ?? 1;
-            // unitPrice or totalPrice
+            const qty = order.quantity ?? 1;
             const unitPrice = order.unitPrice ?? order.priceAdjustment ?? (order.subtotal ?? 0);
+            const variantImage = extractImageFromVariantObject(variant);
+
             fallbackItems.push({
               productId: typeof prod === 'object' ? prod._id : prod,
               productName: prod?.name ?? prod?.title ?? 'Product',
               description: prod?.description ?? '',
-              imageUrl: prod?.imageUrl ?? prod?.images ?? order.imageUrl,
-              variantId: variant?._id ?? variant?.id,
-              variantType: variant?.variantType ?? order.variantType ?? variant?.type,
-              variantValue: variant?.variantValue ?? order.variantValue ?? variant?.value,
+              imageUrl: prod?.imageUrl ?? prod?.images ?? order.imageUrl ?? null,
+              variantId: variant?._id ?? variant?.id ?? null,
+              variantType: variant?.variantType ?? order.variantType ?? variant?.type ?? null,
+              variantValue: variant?.variantValue ?? order.variantValue ?? variant?.value ?? null,
+              variantImage, // prioritized variant image
               quantity: qty,
               unitPrice,
               totalPrice: order.totalPrice ?? order.subtotal ?? unitPrice * qty,
-              rawOrderRef: order, // keep reference if needed
+              rawOrderRef: order,
             });
-          } else {
-            // No productId: keep items empty
           }
 
-          return {
-            ...order,
-            items: fallbackItems,
-          };
+          return { ...order, items: fallbackItems };
         });
 
-        // Sort by createdAt desc if available
+        // Sort newest first
         const sorted = mapped.sort((a, b) => new Date(b.createdAt || b.registrationDate || 0) - new Date(a.createdAt || a.registrationDate || 0));
         setOrders(sorted);
       } catch (err) {
@@ -96,36 +96,96 @@ const Order = () => {
     fetchOrders();
   }, [userId]);
 
+  // helper: extract an image url from a variant-like object (handles array/object/string shapes)
+  function extractImageFromVariantObject(variant) {
+    if (!variant) return null;
+
+    // variant.imageUrl could be:
+    // - an array of objects [{ imageUrl: '...' }, ...]
+    // - an array of strings ['url1', 'url2']
+    // - a string 'https://...'
+    // - object { imageUrl: '...' }
+    try {
+      if (Array.isArray(variant.imageUrl) && variant.imageUrl.length > 0) {
+        const first = variant.imageUrl[0];
+        if (typeof first === 'string') return first;
+        if (first?.imageUrl) return first.imageUrl;
+        if (first?.url) return first.url;
+      }
+      if (typeof variant.imageUrl === 'string' && variant.imageUrl) return variant.imageUrl;
+      if (Array.isArray(variant.images) && variant.images.length > 0) {
+        const f = variant.images[0];
+        if (typeof f === 'string') return f;
+        if (f?.imageUrl) return f.imageUrl;
+      }
+      if (typeof variant.image === 'string' && variant.image) return variant.image;
+      if (variant?.imageUrl?.imageUrl) return variant.imageUrl.imageUrl;
+    } catch (e) {
+      return null;
+    }
+    return null;
+  }
+
   const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Order Placed':
+    switch ((status || '').toString().toLowerCase()) {
+      case 'order placed':
+      case 'placed':
         return <Package className="w-5 h-5 text-blue-600" />;
-      case 'Shipped':
-      case 'Out for Delivery':
+      case 'shipped':
+      case 'out for delivery':
         return <Truck className="w-5 h-5 text-yellow-500" />;
-      case 'Delivered':
+      case 'delivered':
         return <CheckCircle className="w-5 h-5 text-green-600" />;
       default:
         return <Package className="w-5 h-5 text-gray-400" />;
     }
   };
 
+  // Final resolver: PRIORITY -> item.variantImage (from variantId) -> item.imageUrl / productId.imageUrl -> placeholder
   const getItemImage = (item) => {
-    if (!item) return 'https://via.placeholder.com/150?text=No+Image';
+    if (!item) return INLINE_PLACEHOLDER;
+
+    // 1) Priority: variantImage (normalized property)
+    if (item.variantImage) {
+      if (Array.isArray(item.variantImage) && item.variantImage.length > 0) {
+        const first = item.variantImage[0];
+        if (typeof first === 'string') return first;
+        if (first?.imageUrl) return first.imageUrl;
+        if (first?.url) return first.url;
+      }
+      if (typeof item.variantImage === 'string') return item.variantImage;
+      if (item.variantImage?.imageUrl) return item.variantImage.imageUrl;
+    }
+
+    // 2) item-level image fields
     if (typeof item.image === 'string' && item.image) return item.image;
     if (typeof item.imageUrl === 'string' && item.imageUrl) return item.imageUrl;
     if (Array.isArray(item.imageUrl) && item.imageUrl.length > 0) {
       const first = item.imageUrl[0];
-      return typeof first === 'string' ? first : first?.url ?? 'https://via.placeholder.com/150?text=No+Image';
+      return typeof first === 'string' ? first : first?.url ?? INLINE_PLACEHOLDER;
     }
-    // try product object images
+
+    // 3) product object images
     if (item.productId && typeof item.productId === 'object') {
       const p = item.productId;
-      if (typeof p.imageUrl === 'string') return p.imageUrl;
-      if (Array.isArray(p.imageUrl) && p.imageUrl[0]) return p.imageUrl[0];
-      if (Array.isArray(p.images) && p.images[0]) return typeof p.images[0] === 'string' ? p.images[0] : p.images[0]?.url;
+      if (Array.isArray(p.imageUrl) && p.imageUrl.length > 0) {
+        const f = p.imageUrl[0];
+        return typeof f === 'string' ? f : f?.imageUrl ?? f?.url ?? INLINE_PLACEHOLDER;
+      }
+      if (typeof p.imageUrl === 'string' && p.imageUrl) return p.imageUrl;
+      if (Array.isArray(p.images) && p.images.length > 0) {
+        const f = p.images[0];
+        return typeof f === 'string' ? f : f?.imageUrl ?? f?.url ?? INLINE_PLACEHOLDER;
+      }
+      if (typeof p.image === 'string' && p.image) return p.image;
     }
-    return 'https://via.placeholder.com/150?text=No+Image';
+
+    return INLINE_PLACEHOLDER;
+  };
+
+  const formatCurrency = (v) => {
+    const num = Number(v ?? 0);
+    return num.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
   };
 
   if (loading) {
@@ -171,22 +231,41 @@ const Order = () => {
             <div className="border-t pt-4 space-y-4">
               {Array.isArray(order.items) && order.items.length > 0 ? (
                 order.items.map((item, i) => {
-                  const variantType = item.variantType ?? item.variant?.variantType ?? item.variantId?.variantType;
-                  const variantValue = item.variantValue ?? item.variant?.variantValue ?? item.variantId?.variantValue ?? item.selectedColor ?? item.variantValue;
+                  const variantType = item.variantType ?? item.variant?.variantType ?? item.variantId?.variantType ?? item.variant?.type;
+                  const variantValue = item.variantValue ?? item.variant?.variantValue ?? item.variantId?.variantValue ?? item.selectedColor ?? item.variant?.value;
+                  const imageSrc = getItemImage(item);
+                  const isColor = typeof variantType === 'string' && variantType.toLowerCase().includes('color');
+
                   return (
                     <div key={i} className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <img src={getItemImage(item)} alt={item.productName ?? 'product'} className="w-14 h-14 object-cover rounded border" />
+                        <img
+                          src={imageSrc}
+                          alt={item.productName ?? item.name ?? item.productId?.name ?? 'product'}
+                          onError={(e) => { e.currentTarget.src = INLINE_PLACEHOLDER; }}
+                          className="w-14 h-14 object-cover rounded border"
+                        />
                         <div>
                           <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
                             {item.productName ?? item.name ?? item.productId?.name ?? 'Product'}
                           </p>
                           <p className="text-sm text-gray-500">Qty: {item.quantity ?? 1}</p>
 
-                          {/* show color swatch only if variantType indicates color and we have a value */}
-                          {variantType && variantType.toLowerCase?.().includes('color') && variantValue && (
+                          {/* show variant label/value */}
+                          {variantValue && !isColor && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              {variantType ? `${variantType}: ` : ''}{variantValue}
+                            </p>
+                          )}
+
+                          {/* show color swatch */}
+                          {isColor && variantValue && (
                             <div className="mt-1 flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full border" style={{ backgroundColor: variantValue }} title={variantValue} />
+                              <div
+                                className="w-4 h-4 rounded-full border"
+                                style={{ backgroundColor: variantValue }}
+                                title={variantValue}
+                              />
                               <span className="text-xs text-gray-500">{variantValue}</span>
                             </div>
                           )}
@@ -194,7 +273,7 @@ const Order = () => {
                       </div>
 
                       <div className="text-sm font-semibold text-gray-800">
-                        ₹{((item.totalPrice ?? item.unitPrice ?? item.price ?? order.subtotal ?? 0)).toFixed(2)}
+                        ₹{formatCurrency(item.totalPrice ?? item.unitPrice ?? item.price ?? order.subtotal ?? 0)}
                       </div>
                     </div>
                   );
@@ -208,21 +287,21 @@ const Order = () => {
               <div className="space-y-1">
                 <p className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>₹{(order.subtotal ?? 0).toFixed(2)}</span>
+                  <span>₹{formatCurrency(order.subtotal ?? 0)}</span>
                 </p>
                 <p className="flex justify-between">
                   <span>Tax:</span>
-                  <span>₹{(order.taxAmount ?? 0).toFixed(2)}</span>
+                  <span>₹{formatCurrency(order.taxAmount ?? 0)}</span>
                 </p>
-                {order.discountAmount > 0 && (
+                {(order.discountAmount ?? 0) > 0 && (
                   <p className="flex justify-between text-green-600">
                     <span>Discount:</span>
-                    <span>-₹{order.discountAmount.toFixed(2)}</span>
+                    <span>-₹{formatCurrency(order.discountAmount)}</span>
                   </p>
                 )}
                 <p className="flex justify-between font-semibold border-t pt-2 mt-2">
                   <span>Total:</span>
-                  <span>₹{(order.totalAmount ?? 0).toFixed(2)}</span>
+                  <span>₹{formatCurrency(order.totalAmount ?? (order.subtotal ?? 0) + (order.taxAmount ?? 0) - (order.discountAmount ?? 0))}</span>
                 </p>
                 <p className="flex items-center gap-1 text-gray-500 mt-2">
                   <CreditCard size={16} /> {order.paymentMethod ?? order.paymentType ?? '—'}
@@ -232,10 +311,10 @@ const Order = () => {
               <div>
                 <h4 className="font-semibold mb-2">Shipping</h4>
                 <div className="text-sm text-gray-600">
-                  <p>{order.shippingAddress?.name ?? '—'}</p>
-                  <p>{order.shippingAddress?.addressLine1 ?? ''} {order.shippingAddress?.addressLine2 ?? ''}</p>
-                  <p>{order.shippingAddress?.city ?? ''}, {order.shippingAddress?.state ?? ''} {order.shippingAddress?.postalCode ?? ''}</p>
-                  <p>{order.shippingAddress?.phone ?? ''}</p>
+                  <p>{order.shippingAddress?.name ?? order.addresses?.[0]?.name ?? '—'}</p>
+                  <p>{order.shippingAddress?.addressLine1 ?? order.addresses?.[0]?.addressLine1 ?? ''} {order.shippingAddress?.addressLine2 ?? ''}</p>
+                  <p>{order.shippingAddress?.city ?? order.addresses?.[0]?.city ?? ''}, {order.shippingAddress?.state ?? order.addresses?.[0]?.state ?? ''} {order.shippingAddress?.postalCode ?? order.addresses?.[0]?.postalCode ?? ''}</p>
+                  <p>{order.shippingAddress?.phone ?? order.addresses?.[0]?.phone ?? ''}</p>
                 </div>
               </div>
             </div>

@@ -1,8 +1,16 @@
 // pages/ProductDetail.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ShoppingCart, Shield, Truck } from "lucide-react";
+import {
+  ArrowLeft,
+  ShoppingCart,
+  Shield,
+  Truck,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useCart } from "../contexts/CartContext";
 import { toast } from "../hooks/use-toast";
 import { getProductsId } from "../APi/api";
@@ -90,6 +98,10 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(-1);
 
+  // modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalImageIndex, setModalImageIndex] = useState(-1);
+
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
@@ -118,6 +130,39 @@ const ProductDetail = () => {
 
     fetchProduct();
   }, [id]);
+
+  // Keep modal index in sync with selectedImageIndex when modal opens
+  useEffect(() => {
+    if (isModalOpen) {
+      setModalImageIndex(selectedImageIndex >= 0 ? selectedImageIndex : 0);
+    }
+  }, [isModalOpen, selectedImageIndex]);
+
+  // Keyboard handlers for modal navigation & close
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (!isModalOpen || !product?.imageUrl?.length) return;
+      if (e.key === "Escape") {
+        setIsModalOpen(false);
+      } else if (e.key === "ArrowLeft") {
+        setModalImageIndex((prev) => {
+          if (!product) return prev;
+          return (prev - 1 + product.imageUrl.length) % product.imageUrl.length;
+        });
+      } else if (e.key === "ArrowRight") {
+        setModalImageIndex((prev) => {
+          if (!product) return prev;
+          return (prev + 1) % product.imageUrl.length;
+        });
+      }
+    },
+    [isModalOpen, product]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   if (isLoading) {
     return (
@@ -208,7 +253,27 @@ const ProductDetail = () => {
       description: `${quantity} x ${product.name} added to cart.`,
     });
 
+    // small delay before opening cart (keeps UX smooth)
     setTimeout(() => openCart(), 500);
+  };
+
+  // Open modal for a given index
+  const openImageModal = (index) => {
+    setModalImageIndex(index);
+    setIsModalOpen(true);
+  };
+
+  // Modal navigation functions
+  const showPrevModalImage = (e) => {
+    e?.stopPropagation?.();
+    if (!product?.imageUrl?.length) return;
+    setModalImageIndex((prev) => (prev - 1 + product.imageUrl.length) % product.imageUrl.length);
+  };
+
+  const showNextModalImage = (e) => {
+    e?.stopPropagation?.();
+    if (!product?.imageUrl?.length) return;
+    setModalImageIndex((prev) => (prev + 1) % product.imageUrl.length);
   };
 
   return (
@@ -238,7 +303,8 @@ const ProductDetail = () => {
                   key={product.imageUrl[selectedImageIndex]?.imageUrl}
                   src={product.imageUrl[selectedImageIndex]?.imageUrl}
                   alt={product.name}
-                  className="w-full h-96 object-contain bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl shadow-card"
+                  className="w-full h-96 object-contain bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl shadow-card cursor-pointer"
+                  onClick={() => openImageModal(selectedImageIndex)}
                   whileHover={{ scale: 1.03 }}
                   transition={{ duration: 0.3 }}
                 />
@@ -257,7 +323,10 @@ const ProductDetail = () => {
                     key={index}
                     src={img.imageUrl}
                     alt={`Thumb ${index + 1}`}
-                    onClick={() => setSelectedImageIndex(index)}
+                    onClick={() => {
+                      setSelectedImageIndex(index);
+                      openImageModal(index); // open modal immediately on thumbnail click
+                    }}
                     className={`w-20 h-20 object-cover rounded-lg border-2 cursor-pointer ${
                       selectedImageIndex === index ? "border-primary" : "border-muted"
                     }`}
@@ -364,9 +433,9 @@ const ProductDetail = () => {
             <div className="space-y-2 text-muted-foreground">
               {product.material && <div><strong>Material:</strong> {product.material}</div>}
               {product.dimensions && <div><strong>Dimensions:</strong> {product.dimensions}</div>}
-              {product.weight && <div><strong>Weight:</strong> {product.weight} kg</div>}
-              {product.warrantyPeriod && <div><strong>Warranty:</strong> {product.warrantyPeriod} months</div>}
-              {product.careInstructions && <div><strong>Care:</strong> {product.careInstructions}</div>}
+              {/* {product.weight && <div><strong>Weight:</strong> {product.weight} kg</div>} */}
+              {/* {product.warrantyPeriod && <div><strong>Warranty:</strong> {product.warrantyPeriod} months</div>} */}
+              {/* {product.careInstructions && <div><strong>Care:</strong> {product.careInstructions}</div>} */}
             </div>
 
             {/* Features */}
@@ -397,6 +466,84 @@ const ProductDetail = () => {
           </motion.div>
         </div>
       </main>
+
+      {/* =========================
+          FULLSCREEN IMAGE MODAL
+         ========================= */}
+      {isModalOpen && product?.imageUrl && modalImageIndex >= 0 && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setIsModalOpen(false)} // click outside to close
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black bg-opacity-85" />
+
+          {/* Modal content */}
+          <div
+            className="relative max-w-[200vw] max-h-[200vh] flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()} 
+          >
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/50 hover:bg-black/40 text-white"
+              onClick={() => setIsModalOpen(false)}
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Prev button */}
+            <button
+              className="absolute left-4 z-40 p-2 rounded-full bg-black/30 hover:bg-black/20 text-white hidden md:flex items-center justify-center"
+              onClick={showPrevModalImage}
+              aria-label="Previous image"
+            >
+              <ChevronLeft size={28} />
+            </button>
+
+            {/* Next button */}
+            <button
+              className="absolute right-4 z-40 p-2 rounded-full bg-black/30 hover:bg-black/20 text-white hidden md:flex items-center justify-center"
+              onClick={showNextModalImage}
+              aria-label="Next image"
+            >
+              <ChevronRight size={28} />
+            </button>
+
+            {/* Image */}
+            <motion.img
+              key={product.imageUrl[modalImageIndex].imageUrl}
+              src={product.imageUrl[modalImageIndex].imageUrl}
+              alt={`${product.name} — view ${modalImageIndex + 1}`}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              className="max-w-full max-h-[200vw] object-contain rounded-lg shadow-2xl"
+            />
+
+            {/* Thumbnail strip inside modal (optional, shown on small screens) */}
+            {product.imageUrl.length > 1 && (
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 overflow-x-auto px-2">
+                {product.imageUrl.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setModalImageIndex(idx);
+                      setSelectedImageIndex(idx);
+                    }}
+                    className={`w-28 h-28 rounded-md overflow-hidden border-2 ${modalImageIndex === idx ? "border-primary" : "border-transparent"} bg-white/5`}
+                  >
+                    <img src={img.imageUrl} alt={`modal-thumb-${idx}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 };
