@@ -27,7 +27,7 @@ declare global {
     Razorpay: any;
   }
 }
-export const BASE_URL = 'http://localhost:1209/api';
+export const BASE_URL = 'https://monkfish-app-phfed.ondigitalocean.app/api';
 const razorpayKey = "rzp_test_Rd9FMehTGXSduO";
 // Small fallback map: color name -> hex (used if cart item doesn't already include a hex)
 const COLOR_MAP = {
@@ -322,6 +322,7 @@ const Checkout = () => {
       currency: "INR",
       items: state.items.map((item) => ({
         productId: item.id,
+        variantId:item.variantId,
         quantity: item.quantity,
         unitPrice: item.price,
         totalPrice: parseFloat((item.price * item.quantity).toFixed(2)),

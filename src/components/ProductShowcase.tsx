@@ -1,9 +1,9 @@
-import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
-import ProductCard from './ProductCard';
-import { getAllProducts } from '../APi/api.js';
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import ProductCard from "./ProductCard";
+import { getAllProducts } from "../APi/api.js";
 
-import { toast } from '../hooks/use-toast';
+import { toast } from "../hooks/use-toast";
 
 const ProductShowcase = () => {
   const [products, setProducts] = useState([]);
@@ -15,7 +15,7 @@ const ProductShowcase = () => {
       try {
         const fetchedProducts = await getAllProducts();
         setProducts(fetchedProducts);
-        console.log('Fetched products:', fetchedProducts);
+        console.log("Fetched products:", fetchedProducts);
         setIsLoading(false);
       } catch (err) {
         console.error("Error fetching products:", err);
@@ -50,14 +50,14 @@ const ProductShowcase = () => {
   return (
     <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <motion.h2 
+          <motion.h2
             className="text-4xl md:text-5xl font-bold font-kids gradient-text mb-4"
             animate={{ backgroundPosition: ["0%", "100%", "0%"] }}
             transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
@@ -71,29 +71,11 @@ const ProductShowcase = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {products.map((product, index) => (
-            <ProductCard 
-              key={product._id} 
-              product={product} 
-              index={index}
-            />
+            <ProductCard key={product._id} product={product} index={index} />
           ))}
         </div>
 
-        {/* <motion.div 
-          className="text-center mt-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <motion.button
-            className="btn-fun"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            
-          </motion.button>
-        </motion.div> */}
+       
       </div>
     </section>
   );
