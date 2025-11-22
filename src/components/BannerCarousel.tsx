@@ -4,17 +4,19 @@ import { Autoplay, Pagination, EffectFade } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/effect-fade";
+import banner1 from '../assest/banner1.jpeg'
+import banner2 from '../assest/banner2.jpeg'
 
 const banners = [
   {
     id: 1,
-    img: "https://images.pexels.com/photos/5705586/pexels-photo-5705586.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+    img: banner1,
     title: "Little Explorer",
     subtitle: "Adventure starts with imagination 🌈",
   },
   {
     id: 2,
-    img: "https://images.pexels.com/photos/8470014/pexels-photo-8470014.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260",
+    img: banner2,
     title: "Splash Time",
     subtitle: "Water play and summer fun 💦",
   },
@@ -29,7 +31,7 @@ const banners = [
 
 const BannerCarousel = () => {
   return (
-    <div className="w-full h-80 md:h-[400px] relative overflow-hidden">
+    <div className="w-full h-96 md:h-[580px] relative overflow-hidden">
       <Swiper
         modules={[Autoplay, Pagination, EffectFade]}
         spaceBetween={0}
@@ -47,7 +49,7 @@ const BannerCarousel = () => {
               <img
                 src={banner.img}
                 alt={banner.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-fill"
               />
 
               {/* Overlay */}

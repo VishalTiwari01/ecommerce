@@ -56,7 +56,7 @@ const ProductCard = ({ product, index }) => {
 
   return (
     <motion.div
-      className="card-product group relative"
+      className="card-product group bg-pink-50 relative"
       variants={cardVariants}
       initial="hidden"
       whileInView="visible"
@@ -87,7 +87,7 @@ const ProductCard = ({ product, index }) => {
 
       {/* ✅ Updated Product Image */}
       <div
-        className="relative h-48 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-4 overflow-hidden cursor-pointer"
+        className="relative h-72 bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl flex items-center justify-center mb-4 overflow-hidden cursor-pointer"
         onClick={() => navigate(`/product/${product._id}`)}
       >
         {product.imageUrl?.[0]?.imageUrl ? (
@@ -180,7 +180,7 @@ const ProductCard = ({ product, index }) => {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-xl font-bold text-primary">
+            <span className="text-xl font-bold text-pink-400">
               ₹{product.salePrice}
             </span>
             {product.price && (

@@ -74,50 +74,60 @@ const HeroSection = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <Star className="text-accent fill-current" size={24} />
-              <span className="text-accent font-semibold">Premium Kids Products</span>
-              <Heart className="text-secondary fill-current" size={24} />
+              <Star className="text-pink-400 fill-current" size={24} />
+              <span className="text-pink-400 font-semibold">Premium Kids Products</span>
+               <Star className="text-pink-400 fill-current" size={24} />
+              {/* <Heart className="text-secondary fill-current" size={24} /> */}
             </motion.div>
 
             <motion.h1
-              className="text-5xl md:text-7xl font-bold font-kids mb-6 leading-tight"
+              className="text-3xl md:text-6xl font-bold font-kids mb-6 leading-tight"
               initial="hidden"
               animate="visible"
             >
               <motion.span
-                className="block bg-gradient-to-r from-[#7A6A9C] to-[#BBA0D4] bg-clip-text text-transparent"
+                className="block  md:text-5xl font-bold font-kids gradient-text  bg-clip-text text-transparent"
                 initial="hidden"
                 animate="visible"
                 variants={textVariants}
               >
-                Explore Fun &
+                Welcome to Kawai World-
               </motion.span>
               <motion.span
-                className="block bg-gradient-to-r from-[#7A6A9C] to-[#BBA0D4] bg-clip-text text-transparent"
+                className="block text-3xl md:text-4xl bg-gradient-to-r from-[#7A6A9C] to-[#BBA0D4] bg-clip-text text-transparent"
                 initial="hidden"
                 animate="visible"
                 variants={textVariants}
               >
-                Functional Kids
+                Your One-Stop Gift Gallery!
               </motion.span>
-              <motion.span
+              {/* <motion.span
                 className="text-primary block"
                 initial="hidden"
                 animate="visible"
                 variants={textVariants}
               >
                 Products
-              </motion.span>
+              </motion.span> */}
             </motion.h1>
 
             <motion.p
-              className="text-xl text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0"
+              className="text-xl text-pink-400 text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0"
               initial="hidden"
               animate="visible"
               variants={textVariants}
               transition={{ delay: 0.3 }}
             >
-              Discover magical toys, colorful water bottles, and amazing products that spark imagination and make learning fun!
+              🧸 From cute toys and stationery to stylish accessories and creative décor, discover delightful surprises for every age and every occasion 🧸.
+            </motion.p>
+            <motion.p
+              className="text-xl text-pink-400 text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0"
+              initial="hidden"
+              animate="visible"
+              variants={textVariants}
+              transition={{ delay: 0.3 }}
+            >
+              Find the perfect gift that brings smiles, sparks imagination, and makes every moment special.
             </motion.p>
 
             {/* Buttons */}
@@ -128,25 +138,25 @@ const HeroSection = () => {
               variants={buttonVariants}
             >
               {/* Updated Button with #F7D2CF */}
-              <motion.button
+              {/* <motion.button
                 className="px-6 py-3 rounded-full font-semibold text-black bg-[#F7D2CF] shadow-md hover:brightness-110 transition group"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap={{ scale: 0.95 }}
               >
                 Shop Now
-                {/* <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-200" size={20} /> */}
-              </motion.button>
+                
+              </motion.button> */}
 
               {/* Secondary Button */}
-              <motion.button
+              {/* <motion.button
                 className="btn-fun border border-primary text-primary px-6 py-3 rounded-full font-semibold hover:bg-primary/10 transition"
                 variants={buttonVariants}
                 whileHover="hover"
                 whileTap={{ scale: 0.95 }}
               >
                 Discover More ✨
-              </motion.button>
+              </motion.button> */}
             </motion.div>
 
             {/* Trust Indicators */}
